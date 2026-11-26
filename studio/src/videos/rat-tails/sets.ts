@@ -43,7 +43,7 @@ export const office = (): SetDef => {
   dress(g, [
     [P.rug(3.6, 2.4), [0.1, 0, 0.6]],
     [P.desk(2.5), [0.45, 0, -1.3]],
-    [P.chair(), [1.1, 0, -2.3]],
+    [P.chair(), [-3.3, 0, -1.2], 0.9],
     [P.windowLit(1.5, 2.0, "#cfeaf7", "#6b4a2d", "#3d6a5a"), [-2.5, 1.5, B]],
     [P.framed(1.25, 0.95, TEX.map()), [0.85, 2.35, B]],
     [P.framed(0.62, 0.8, TEX.portrait()), [2.3, 2.45, B]],

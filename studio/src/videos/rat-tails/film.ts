@@ -144,14 +144,14 @@ const s5 = (f: number): CastItem[] => {
 };
 const s5bcam = (f: number): Cam => track(f, [{ f: 596, cam: { pos: [-0.5, 1.3, 0.8], look: [-0.9, 1.3, -1.2], fov: 36, roll: -0.08 }, rate: 0.004 }]);
 const s5b = (f: number): CastItem[] => [
-  person("loc", LOCAL_A, VILLAGER, { eyes: "happy", mouth: "grin", face: 0.2, rh: [0.75, -0.75], held: "coin", lh: [-0.7, -0.5], heldL: "tail", squash: pop(f, 598) }, f, 2, 1.62),
+  person("loc", LOCAL_A, VILLAGER, { eyes: "happy", mouth: "smile", face: 0.2, rh: [0.75, -0.75], held: "coin", lh: [-0.7, -0.5], heldL: "tail", squash: pop(f, 598) }, f, 2, 1.62),
   fx("pl", TEX.plus(), [VILLAGER[0] + 0.55, 1.95 + (f - 598) * 0.01, VILLAGER[2] + 0.05], 0.42, 0.42, Math.max(0, 1 - (f - 598) / 22)),
 ];
 
 // 6. TAILS POUR IN: from above, the pile grows as the queue files past. Then a low angle on a thrilled governor.
 const s6cam = (f: number): Cam => track(f, [
   { f: 621, cam: { pos: [-0.7, 3.3, 2.0], look: [0.25, 0.95, -1.4], fov: 46, roll: 0.09 } },
-  { f: 690, cam: { pos: [0.3, 0.72, 0.5], look: [0.85, 1.6, -2.1], fov: 42, roll: -0.07 }, dur: 10 },
+  { f: 690, cam: { pos: [0.5, 1.75, 0.7], look: [1.0, 1.25, -2.1], fov: 40, roll: -0.07 }, dur: 10 },
 ]);
 const s6 = (f: number): CastItem[] => {
   const step = Math.floor((f - 621) / 22), u = ((f - 621) % 22) / 22, thr = f >= 690;
@@ -169,14 +169,14 @@ const s6 = (f: number): CastItem[] => {
 const walkX = (f: number) => 2.6 - 1.5 * prog(f, 716, 44);
 const s7cam = (f: number): Cam => track(f, [
   { f: 716, cam: { pos: [walkX(f) + 0.5, 1.15, 4.4], look: [walkX(f) - 0.2, 1.15, 0.3], fov: 40, roll: -0.04 } },
-  { f: 783, cam: { pos: [0.85, 3.6, 3.4], look: [0.9, 0.6, 0.6], fov: 46, roll: 0.09 }, dur: 9 },
+  { f: 783, cam: { pos: [0.85, 3.3, 3.6], look: [0.9, 0.45, 0.8], fov: 44, roll: 0.09 }, dur: 9 },
 ]);
 const s7 = (f: number): CastItem[] => {
   const stopF = 760, walking = f < stopF, x = walkX(f), low = f >= 783;
   return [
     person("off", OFFICIAL, [x, 0, 0.3], walking ? { view: "side", eyes: "lid", mouth: "smile", face: -1, walk: f * 0.55, rh: [0.25 + 0.3 * Math.sin(f * 0.55), 1.1], lh: [-0.25 - 0.3 * Math.sin(f * 0.55), 1.1] } : { eyes: "wide", mouth: low ? "o" : "dash", brow: -1, face: -0.5, look: [-0.5, 0.9], rh: [0.5, low ? -0.2 : 1.0], lh: [-0.5, low ? -0.2 : 1.0], squash: pop(f, stopF) * pop(f, 786), tilt: -0.08, sweat: low }, f, 1),
     ...(!walking && !low ? [fx("q", TEX.q(), [x - 0.1, 2.25, 0.3], 0.34 * overshoot(prog(f, stopF + 2, 6)), 0.42 * overshoot(prog(f, stopF + 2, 6)))] : []),
-    ...swarm("nt", 9, f, (i, r) => { const xx = 3.0 - ((f - 716) * (0.02 + r() * 0.006) + i * 0.62) % 5.2; return { p: [xx, 0, 0.85 + (i % 3) * 0.36 + r() * 0.1], s: 1.15, t: f * 0.55, flip: true }; }, (i) => ({ tail: false, bandage: true, mood: i % 2 ? "smug" : "happy" })),
+    ...swarm("nt", 9, f, (i, r) => { const xx = 3.0 - ((f - 716) * (0.02 + r() * 0.006) + i * 0.62) % 5.2; return { p: [xx, 0, 0.75 + (i % 3) * 0.42 + r() * 0.1], s: 1.7, t: f * 0.55, flip: true }; }, (i) => ({ tail: false, bandage: true, mood: i % 2 ? "smug" : "happy" })),
   ];
 };
 
@@ -207,33 +207,34 @@ const pen = (f: number, n: number): CastItem[] => swarm("pen", n, f, (i, r) => {
   const a = r() * 6.28 + f * 0.01 * (i % 2 ? 1 : -1), rad = 0.25 + r() * 1.1;
   return { p: [PEN[0] - 0.4 + Math.cos(a) * rad * 1.5, 0, PEN[2] + Math.sin(a) * rad], flip: Math.sin(a) > 0 === (i % 2 === 0), s: i % 3 === 0 ? 1.1 : 1.45 };
 }, (i) => ({ mood: i % 4 === 0 ? "smug" : "happy", baby: i % 3 === 0 }));
-const farmer = (f: number, protest: boolean, seen: boolean): CastItem => person("farmer", FARMER, [1.5, 0, -1.2], seen ? { eyes: "wide", mouth: "wave", face: -0.5, rh: [0.4, 0.9], held: "bucket", lh: [-0.5, 1.0], sweat: true, brow: -1, squash: pop(f, 1090) } : protest ? { eyes: "wide", mouth: say("farmer") ?? "teeth", brow: -0.8, face: -0.6, rh: [0.9, -0.8 + 0.25 * Math.round(Math.sin(clock.real * 0.9))], lh: [-0.9, -0.8 - 0.25 * Math.round(Math.sin(clock.real * 0.9))], sweat: true } : { eyes: "happy", mouth: "smile", face: -0.5, rh: [0.4, 0.9], held: "bucket", lh: [-0.5, 1.0] }, f, 12, 1.6);
-const s9acam = (f: number): Cam => track(f, [{ f: 1013, cam: { pos: [-6.5, 3.0, 20], look: [-0.8, 1.6, -3], fov: 38, roll: 0.03 }, rate: 0.0035 }]);
+const FARMER_AT: V3 = [0.55, 0, 0.3];
+const farmer = (f: number, protest: boolean, seen: boolean): CastItem => person("farmer", FARMER, FARMER_AT, seen ? { eyes: "wide", mouth: "wave", face: -0.5, rh: [0.4, 0.9], held: "bucket", lh: [-0.5, 1.0], sweat: true, brow: -1, squash: pop(f, 1090) } : protest ? { eyes: "wide", mouth: say("farmer") ?? "teeth", brow: -0.8, face: -0.6, rh: [0.9, -0.8 + 0.25 * Math.round(Math.sin(clock.real * 0.9))], lh: [-0.9, -0.8 - 0.25 * Math.round(Math.sin(clock.real * 0.9))], sweat: true } : { eyes: "happy", mouth: "smile", face: -0.5, rh: [0.4, 0.9], held: "bucket", lh: [-0.5, 1.0] }, f, 12, 1.6);
+const s9acam = (f: number): Cam => track(f, [{ f: 1013, cam: { pos: [-6.2, 1.1, 19], look: [-0.8, 1.9, -3], fov: 38, roll: 0.03 }, rate: 0.0035 }]);
 const s9a = (f: number): CastItem[] => [
   person("insp", INSPECTOR, [-6.2 + 2.9 * prog(f, 1013, 34), 0, 2.2], { view: "side", face: 1, eyes: "lid", mouth: "dash", walk: f * 0.6, rh: [0.4, 0.2], held: "magnifier", lh: [-0.3, 1.0] }, f, 9),
   farmer(f, false, false), ...pen(f, 30),
 ];
 const s9cam = (f: number): Cam => shake(track(f, [
-  { f: 1045, cam: { pos: [-1.9, 1.5, 4.3], look: [0.3, 1.05, -1.4], fov: 42, roll: -0.06 } },
+  { f: 1045, cam: { pos: [-1.9, 1.5, 4.3], look: [0.9, 1.05, -1.4], fov: 42, roll: -0.06 } },
   { f: 1090, cam: { pos: [-0.2, 2.9, 2.6], look: [-0.15, 0.6, -2.9], fov: 46, roll: 0.07 }, dur: 10 },
 ]), f, 1092, 0.1);
 const s9 = (f: number): CastItem[] => {
   const seen = f >= 1090, peek = burst(prog(f, 1045, 7));
   return [
-    person("insp", INSPECTOR, [-1.05, -0.75 + 0.75 * peek, 1.2], seen ? { eyes: "wide", mouth: "o", brow: -1, face: 0.6, rh: [0.9, -0.5], held: "magnifier", lh: [-0.8, -0.6], squash: pop(f, 1090), sweat: true } : { eyes: "side", mouth: "dash", face: 0.7, look: [0.9, 0], brow: 0.4, rh: [0.9, -0.3], held: "magnifier", lh: [-0.3, 1.0] }, f, 9, 1.7),
+    person("insp", INSPECTOR, [-0.85, -0.75 + 0.75 * peek, 1.3], seen ? { eyes: "wide", mouth: "o", brow: -1, face: 0.6, rh: [0.9, -0.5], held: "magnifier", lh: [-0.8, -0.6], squash: pop(f, 1090), sweat: true } : { eyes: "side", mouth: "dash", face: 0.7, look: [0.9, 0], brow: 0.4, rh: [0.9, -0.3], held: "magnifier", lh: [-0.3, 1.0] }, f, 9, 1.7),
     farmer(f, !seen, seen), ...pen(f, 44),
   ];
 };
 
 // 10. BREEDING: a low hero angle on the farmer, tails in one hand, coin in the other.
 const s10cam = (f: number): Cam => track(f, [
-  { f: 1123, cam: { pos: [1.0, 1.4, 2.2], look: [1.5, 1.0, -1.2], fov: 42, roll: 0.05 } },
-  { f: 1160, cam: { pos: [2.0, 0.5, 1.35], look: [1.5, 1.15, -1.2], fov: 44, roll: -0.1 }, dur: 10 },
+  { f: 1123, cam: { pos: [0.1, 1.4, 3.7], look: [0.55, 1.0, 0.3], fov: 42, roll: 0.05 } },
+  { f: 1160, cam: { pos: [1.2, 0.5, 2.8], look: [0.55, 1.15, 0.3], fov: 44, roll: -0.1 }, dur: 10 },
 ]);
 const s10 = (f: number): CastItem[] => {
   const show = f >= 1160;
   return [
-    person("farmer", FARMER, [1.5, 0, -1.2], show ? { eyes: "happy", mouth: "grin", face: 0.3, rh: [0.75, -0.5], held: "tails", lh: [-0.75, -0.3], heldL: "coin", squash: pop(f, 1160), tilt: bob(f) } : { eyes: "happy", mouth: "smile", face: -0.5, rh: [0.4, 0.6 + 0.2 * Math.round(Math.sin(f * 0.5))], held: "bucket", lh: [-0.5, 1.0] }, f, 12, 1.6),
+    person("farmer", FARMER, FARMER_AT, show ? { eyes: "happy", mouth: "smile", face: 0.3, rh: [0.75, -0.5], held: "tails", lh: [-0.75, -0.3], heldL: "coin", squash: pop(f, 1160), tilt: bob(f) } : { eyes: "happy", mouth: "smile", face: -0.5, rh: [0.4, 0.6 + 0.2 * Math.round(Math.sin(f * 0.5))], held: "bucket", lh: [-0.5, 1.0] }, f, 12, 1.6),
     ...pen(f, 44),
   ];
 };
@@ -250,7 +251,7 @@ const s11 = (f: number): CastItem[] => [
 // 12. PAYOFF: dusk. Up and back to a high wide: the street belongs to the rats. Ends on the last word.
 const s12cam = (f: number): Cam => track(f, [
   { f: 1241, cam: { pos: [0.9, 0.9, 3.9], look: [0.4, 1.3, 0.3], fov: 40, roll: -0.08 } },
-  { f: 1281, cam: { pos: [0.3, 3.9, 6.6], look: [0.35, 0.9, -0.8], fov: 46, roll: 0.05 }, dur: 14, rate: 0.0012 },
+  { f: 1281, cam: { pos: [0.3, 2.9, 4.9], look: [0.4, 1.0, 0.1], fov: 46, roll: 0.05 }, dur: 14, rate: 0.0012 },
 ]);
 const s12 = (f: number): CastItem[] => {
   const wide = f >= 1281;

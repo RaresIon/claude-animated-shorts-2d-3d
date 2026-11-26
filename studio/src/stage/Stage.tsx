@@ -109,7 +109,10 @@ class Engine {
     c = drift(c, f); // the camera never fully stops
     cam.position.set(...c.pos); cam.fov = c.fov ?? 40; cam.aspect = aspect; cam.near = 0.1; cam.far = 400; cam.up.set(0, 1, 0);
     cam.lookAt(c.look[0], c.look[1], c.look[2]); cam.rotateY(-yaw);
-    const face = cam.quaternion.clone(), up = new THREE.Vector3(0, 1, 0).applyQuaternion(face); // cards face the lens (before the dutch roll)
+    // cards face the lens (before the dutch roll); their tilt is capped at 35 degrees so a card seen from a steep
+    // angle does not lean back through the furniture behind it
+    const fe = new THREE.Euler().setFromQuaternion(cam.quaternion, "YXZ"); fe.x = Math.max(-0.6, Math.min(0.6, fe.x)); fe.z = 0;
+    const face = new THREE.Quaternion().setFromEuler(fe), up = new THREE.Vector3(0, 1, 0).applyQuaternion(face);
     cam.rotateZ(c.roll ?? 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     const kd = new THREE.Vector3(...m.key[2]).normalize().multiplyScalar(30);
     this.sun.target.position.set(c.look[0], 0, c.look[2]); this.sun.position.set(c.look[0] + kd.x, kd.y, c.look[2] + kd.z); this.sun.target.updateMatrixWorld();
