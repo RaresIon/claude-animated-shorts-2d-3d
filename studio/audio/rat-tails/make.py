@@ -1,9 +1,9 @@
 """Sound for "The Rat Tail Problem": original sneaky-pizzicato score + CC0 effects (audio/sfx, see fetch_sfx.py) +
 the mix under the voice. Every cue is a picture frame from src/videos/rat-tails/film.ts, so effects land on the pose
-change they belong to. Run: python3 audio/make.py  ->  audio/mix.wav (48 kHz stereo, exact film length, -14 LUFS)."""
+change they belong to. Run: python3 audio/rat-tails/make.py  ->  audio/rat-tails/mix.wav (48 kHz stereo, exact film length, -14 LUFS)."""
 import os, sys, numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "templates", "audio"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "templates", "audio"))
 from dsp import SR, ns, rng, dbg, lp, hp, pan, st, place, fades, make_ir, convolve_st, integrated, momentary_max, read_wav, write_wav, true_peak
 import instruments as I
 import sfx_gen as G
@@ -91,7 +91,7 @@ voice = st(read_wav(os.path.join(HERE, "voice.wav"))[0])
 VREF = integrated(voice)
 sfx = np.zeros((2, N)); cues = []
 def load(name):
-    x = read_wav(os.path.join(HERE, "sfx", name + ".wav"))[0]; return st(x)
+    x = read_wav(os.path.join(HERE, "..", "sfx", name + ".wav"))[0]; return st(x)
 def ev(f, x, lu, name, p=0.0, speed=1.0):
     """place an effect at frame f so its loudest moment sits `lu` LU relative to the voice"""
     x = load(x) if isinstance(x, str) else (st(x) if np.ndim(x) == 2 else pan(x, p))

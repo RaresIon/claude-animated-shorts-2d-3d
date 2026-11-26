@@ -50,3 +50,19 @@ export const field = (o: { ground?: THREE.Texture; hills?: string; size?: number
   return g;
 };
 export { card, cyl, dirt };
+
+/** open water: a big sea plane with painted wave marks (scroll `water.offset` in the set's tick), an optional shore
+ *  strip at the back (z < -shoreZ) and far islands. Stand a ship at the origin and bob it in the tick. */
+export const sea = (o: { water?: string; shore?: THREE.Texture; shoreZ?: number; foam?: string } = {}) => {
+  const c0 = o.water ?? "#2f7fb8";
+  const water = ctex(`sea${c0}`, 512, 512, (g, r) => {
+    g.fillStyle = c0; g.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 40; i++) { g.fillStyle = shade(c0, 0.85 + r() * 0.3) + "88"; g.beginPath(); g.ellipse(r() * 512, r() * 512, 40 + r() * 70, 10 + r() * 16, 0, 0, 7); g.fill(); }
+    g.lineCap = "round"; g.lineWidth = 5;
+    for (let i = 0; i < 46; i++) { const x = r() * 512, y = r() * 512, w = 26 + r() * 50; g.strokeStyle = i % 3 ? shade(c0, 1.45) : (o.foam ?? "#eaf7fd"); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y - 9, x + w, y); g.stroke(); }
+  }, [26, 26]);
+  const g = group(); const plane = new THREE.Mesh(new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: water })); plane.receiveShadow = true; g.add(plane);
+  if (o.shore) { const z = o.shoreZ ?? 9; const land = new THREE.Mesh(new THREE.PlaneGeometry(260, 120).rotateX(-Math.PI / 2), lit(o.shore)); land.receiveShadow = true; land.position.set(0, 0.06, -z - 60); g.add(land); g.add(put(box(260, 0.1, 1.2, "#eaf7fd", false), 0, 0.0, -z + 0.5)); }
+  for (let i = 0; i < 6; i++) g.add(put(cloud(9 + (i % 3) * 3, i + 3), -60 + i * 26, 22 + (i % 3) * 5, -110));
+  return { g, water };
+};

@@ -43,7 +43,8 @@ if (!film.shots.some((s) => s.tag === "wide")) say("FAIL", "no far wide shot (ch
   if (n3 > ch.length * 0.1) say("FAIL", "more than 10 % of captions are longer than 2 words");
   if (wps < 3.3 || wps > 4.1) say("FAIL", `narration pace ${wps.toFixed(2)} words/s is outside 3.3-4.1`); }
 // --- the time warp, written out for the sound builder (audio/make.py maps its cue frames through it)
-if (film.warp) fs.writeFileSync(new URL("../audio/warp.json", import.meta.url), JSON.stringify(film.warp));
+fs.mkdirSync(new URL(`../audio/${name}/`, import.meta.url), { recursive: true });
+fs.writeFileSync(new URL(`../audio/${name}/warp.json`, import.meta.url), JSON.stringify(film.warp ?? { from: [0, film.total], to: [0, film.total] }));
 if (film.shots[0].a !== 0 || film.shots[film.shots.length - 1].b !== film.total) say("FAIL", "shots do not cover the film from frame 0 to the end");
 
 film.shots.forEach((s, i) => {
