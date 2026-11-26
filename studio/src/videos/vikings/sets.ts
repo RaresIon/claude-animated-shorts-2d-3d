@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { SetDef } from "../../stage/Stage";
 import * as P from "../../stage/props";
 import { sea } from "../../stage/sets";
-import { dirt, grass, sign } from "../../stage/paint";
+import { dirt, grass, sand, sign } from "../../stage/paint";
 import { G, INK, V3, rng } from "../../stage/util";
 
 const { put, dress, group } = P;
@@ -12,7 +12,7 @@ export const SHORE = 7; // the beach starts at z = -SHORE
 
 // ---------------------------------------------------------------- the ship: where it is at every frame, per set
 /** frames the sets animate on; film.ts fills them in from the words */
-export const TIMES = { slide: 880, bump: 930, sale: 1080 };
+export const TIMES = { slide: 880, bump: 930, sale: 1080, runA: 780, runB: 813 };
 export type ShipPose = { x: number; y: number; roll: number; pitch: number; yaw: number };
 const sw = (f: number) => ({ y: 0.07 * Math.sin(f * 0.11), roll: 0.035 * Math.sin(f * 0.08), pitch: 0.02 * Math.sin(f * 0.13 + 1) });
 const ease = (u: number) => { const x = Math.max(0, Math.min(1, u)); return 1 - (1 - x) ** 3; };
@@ -20,7 +20,7 @@ export const shipPose = (set: string, f: number): ShipPose => {
   const s = sw(f);
   if (set === "hook") return { ...s, x: -1.6 + 1.6 * ease(f / 40), yaw: -0.25 * ease((f - 52) / 30), roll: s.roll + 0.1 * Math.sin(Math.min(1, Math.max(0, (f - 52) / 30)) * Math.PI) };
   if (set === "fog") return { x: Math.sin(f * 0.02) * 0.6, y: 0.16 * Math.sin(f * 0.16), roll: 0.09 * Math.sin(f * 0.13), pitch: 0.05 * Math.sin(f * 0.17), yaw: 0.25 * Math.sin(f * 0.031) };
-  if (set === "coast1" || set === "coast2" || set === "coast3") return { ...s, x: 0, yaw: 0 };
+  if (set === "coast1" || set === "coast3" || set === "run") return { ...s, x: 0, yaw: 0 };
   if (set === "greenland") { const b = TIMES.bump, u = ease((f - TIMES.slide) / (b - TIMES.slide)); return { ...s, x: -9 + 9 * u, y: s.y * (f > b ? 0.3 : 1), roll: s.roll * (f > b ? 0.3 : 1) + (f >= b && f < b + 10 ? 0.05 * Math.sin((f - b) * 1.3) : 0), yaw: 0 }; }
   return { x: 0, y: s.y * 0.4, roll: s.roll * 0.4, pitch: 0, yaw: 0 }; // harbour: moored
 };
@@ -47,28 +47,38 @@ export const TEX = {
 
 // ---------------------------------------------------------------- one water set, many shores
 type Kind = "harbour" | "fog" | "forest" | "flat" | "rocky" | "greenland";
-const water = (kind: Kind, setName: string, extra?: (g: THREE.Group, r: () => number) => ((f: number) => void) | void): SetDef => {
-  const shore = kind === "fog" ? undefined : kind === "greenland" ? dirt("#cfd9e0", [40, 20]) : kind === "rocky" ? dirt("#8f8a86", [40, 20]) : kind === "harbour" ? grass("#7a9a58", [40, 20]) : dirt("#e2cf9a", [40, 20]);
-  const { g, water: tex } = sea({ water: kind === "fog" ? "#5f7f92" : kind === "greenland" ? "#2f8fb8" : "#2a84c0", shore, shoreZ: SHORE });
-  const r = rng(kind.length * 13 + 5);
-  const ship = P.longship(); g.add(ship);
+const GROUND: Record<Exclude<Kind, "fog">, () => THREE.Texture> = { greenland: () => dirt("#cfd9e0", [1, 1]), rocky: () => dirt("#8f8a86", [1, 1]), harbour: () => grass("#7a9a58", [1, 1]), forest: () => sand("#e6d3a0", [1, 1]), flat: () => sand("#efe0b4", [1, 1]) };
+/** a stretch of coast from x0 to x1: beach, what grows or stands behind it, and the hills or ice on the horizon */
+const shoreBand = (kind: Exclude<Kind, "fog">, x0: number, x1: number, seed: number) => {
+  const g = group(), r = rng(seed), w = x1 - x0, cx = (x0 + x1) / 2, rx = () => x0 + r() * w, clear = (x: number) => Math.abs(x - cx) < 5 ? x + (x < cx ? -5 : 5) : x;
+  const t = GROUND[kind](); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / 2.4, 50);
+  const land = new THREE.Mesh(new THREE.PlaneGeometry(w, 120).rotateX(-Math.PI / 2), P.lit(t)); land.receiveShadow = true; land.position.set(cx, 0.06, -SHORE - 60); g.add(land);
+  g.add(put(P.box(w, 0.1, 1.2, "#eaf7fd", false), cx, 0, -SHORE + 0.5)); // surf line
   if (kind === "forest" || kind === "flat") {
-    g.add(put(new THREE.Mesh(new THREE.PlaneGeometry(260, 100).rotateX(-Math.PI / 2), P.lit(grass(kind === "forest" ? "#5f9a48" : "#8ab060", [40, 16]))), 0, 0.09, -SHORE - 55));
-    for (let i = 0; i < (kind === "forest" ? 46 : 16); i++) g.add(put(P.pine(4 + r() * 3.5, kind === "forest" ? "#2f6a4a" : "#4a8a5a", i), -30 + r() * 60, 0.09, -SHORE - 4.5 - r() * (kind === "forest" ? 22 : 30)));
-    for (let i = 0; i < 6; i++) g.add(put(P.hill(18 + (i % 3) * 8, i % 2 ? "#5f9a48" : "#4f8a48", 0.3 + (i % 2) * 0.12), -60 + i * 24, 0, -SHORE - 46 - (i % 3) * 8));
-    for (let i = 0; i < 7; i++) g.add(put(P.rock(0.35 + r() * 0.45, "#a8a096", i), (i % 2 ? -1 : 1) * (5.5 + r() * 9), 0.06, -SHORE - 0.8 - r() * 2.6));
-    for (let i = 0; i < 8; i++) g.add(put(P.bush(0.6 + r() * 0.5, "#4f8a48", i), -16 + r() * 32, 0.09, -SHORE - 5.2 - r() * 1.5));
+    const gt = grass(kind === "forest" ? "#5f9a48" : "#8ab060", [1, 1]); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(w / 2.4, 44);
+    g.add(put(new THREE.Mesh(new THREE.PlaneGeometry(w, 100).rotateX(-Math.PI / 2), P.lit(gt)), cx, 0.09, -SHORE - 55));
+    for (let i = 0; i < Math.round((kind === "forest" ? 0.36 : 0.13) * w); i++) g.add(put(P.pine(4 + r() * 3.5, kind === "forest" ? "#2f6a4a" : "#4a8a5a", i + seed), rx(), 0.09, -SHORE - 4.5 - r() * (kind === "forest" ? 22 : 30)));
+    for (let i = 0; i < Math.round(w / 22) + 1; i++) g.add(put(P.hill(18 + (i % 3) * 8, i % 2 ? "#5f9a48" : "#4f8a48", 0.3 + (i % 2) * 0.12), x0 + i * 24, 0, -SHORE - 46 - (i % 3) * 8));
+    for (let i = 0; i < Math.round(w / 18); i++) g.add(put(P.rock(0.3 + r() * 0.4, "#a8a096", i), clear(rx()), 0.06, -SHORE - 0.8 - r() * 2.6));
+    for (let i = 0; i < Math.round(w / 9); i++) g.add(put(P.bush(0.6 + r() * 0.5, "#4f8a48", i), rx(), 0.09, -SHORE - 5.2 - r() * 1.5));
   }
   if (kind === "rocky") {
-    for (let i = 0; i < 26; i++) g.add(put(P.rock(0.6 + r() * 1.6, i % 3 ? "#8a8590" : "#6f6a78", i), -30 + r() * 60, 0.06, -SHORE - 2.5 - r() * 16));
-    for (let i = 0; i < 6; i++) g.add(put(P.glacier(10, 9 + r() * 6, i + 20, ["#7f7a88", "#959099", "#8a8590", "#e6eef2"]), -40 + i * 16, 0, -SHORE - 22 - r() * 6)); // grey mountains, a little snow
+    for (let i = 0; i < Math.round(w / 5); i++) g.add(put(P.rock(0.6 + r() * 1.6, i % 3 ? "#8a8590" : "#6f6a78", i), rx(), 0.06, -SHORE - 2.5 - r() * 16));
+    for (let i = 0; i < Math.round(w / 12); i++) g.add(put(P.glacier(12, 10 + r() * 7, i + 20, ["#7f7a88", "#959099", "#8a8590", "#e6eef2"]), x0 + 6 + i * 12, 0, -SHORE - 20 - r() * 6)); // grey peaks, a little snow
   }
   if (kind === "greenland") {
-    for (let i = 0; i < 5; i++) g.add(put(P.glacier(14, 7 + r() * 5, i + 3), -34 + i * 17, 0, -SHORE - 17 - r() * 5));
-    for (let i = 0; i < 5; i++) g.add(put(P.iceberg(1.2 + r() * 1.6, i), -18 + i * 8 + r() * 3, 0, 4 + r() * 7));
-    for (let i = 0; i < 6; i++) g.add(put(P.rock(0.3 + r() * 0.5, "#9aa4ac", i), (i % 2 ? -1 : 1) * (6 + r() * 7), 0.06, -SHORE - 0.8 - r() * 3));
+    for (let i = 0; i < Math.round(w / 15); i++) g.add(put(P.glacier(15, 8 + r() * 6, i + 3), x0 + 7 + i * 15, 0, -SHORE - 16 - r() * 5));
+    for (let i = 0; i < Math.round(w / 40) + 3; i++) g.add(put(P.iceberg(1.2 + r() * 1.6, i), cx - 18 + i * 8 + r() * 3, 0, 4 + r() * 7));
+    for (let i = 0; i < 6; i++) g.add(put(P.rock(0.3 + r() * 0.5, "#9aa4ac", i), clear(cx - 13 + r() * 26), 0.06, -SHORE - 0.8 - r() * 3));
   }
-  const tick = extra?.(g, r);
+  if (kind === "harbour") for (let i = 0; i < Math.round(w / 25); i++) g.add(put(P.hill(16 + (i % 3) * 7, i % 2 ? "#6f9a58" : "#5f8a50", 0.3), x0 + i * 25, 0, -SHORE - 40));
+  return g;
+};
+const water = (kind: Kind, setName: string, extra?: (g: THREE.Group, r: () => number) => ((f: number) => void) | void): SetDef => {
+  const { g, water: tex } = sea({ water: kind === "fog" ? "#5f7f92" : kind === "greenland" ? "#2f8fb8" : "#2a84c0" });
+  const ship = P.longship(); g.add(ship);
+  if (kind !== "fog") g.add(shoreBand(kind, -70, 70, kind.length * 13 + 5));
+  const tick = extra?.(g, rng(7));
   return { root: g, tick: (f) => {
     const p = shipPose(setName, f); ship.position.set(p.x, p.y, 0); ship.rotation.set(p.roll, p.yaw, p.pitch);
     tex.offset.set((f * 0.0016) % 1, (f * 0.0009) % 1);
@@ -79,63 +89,82 @@ const water = (kind: Kind, setName: string, extra?: (g: THREE.Group, r: () => nu
 export const hook = (): SetDef => water("forest", "hook");
 export const fog = (): SetDef => water("fog", "fog");
 export const coast1 = (): SetDef => water("forest", "coast1");
-export const coast2 = (): SetDef => water("flat", "coast2");
 export const coast3 = (): SetDef => water("rocky", "coast3");
+/** the three-coasts run: the ship holds still and the shore slides past, a sandy flat coast and then a rocky one, in
+ *  one continuous take (TIMES.runB is when the second gives way to the third) */
+export const RUN_SHIFT = 34;
+export const runShift = (f: number) => { const u = Math.max(0, Math.min(1, (f - (TIMES.runB - 9)) / 16)); return RUN_SHIFT * u * u * (3 - 2 * u); };
+export const run = (): SetDef => water("fog", "run", (g) => {
+  const shore = group(shoreBand("flat", -17, 17, 31), shoreBand("rocky", 17, 60, 47)); g.add(shore);
+  return (f: number) => { shore.position.x = -runShift(f); };
+});
 
 /** home: a turf longhouse by the water, a dock out to the ship, fish drying, and the note on the door */
 export const HOUSE: V3 = [-2.6, 0.06, -SHORE - 4.2];
+export const SIGNPOST: V3 = [4.8, 0.06, -SHORE - 1.2];
 export const harbour = (): SetDef => water("harbour", "harbour", (g) => {
-  const forSale = put(P.poster(1.5, 1.0, TEX.forSale()), 1.7, 0.05, 1.12);
+  // the FOR SALE board hangs from the yard, high above the deck where nothing crosses it
+  const forSale = group(put(P.framed(1.9, 1.27, TEX.forSale(), "#6b4a2d"), 1.6, 2.75, 0.75), put(P.cyl(0.012, 0.012, 1.6, INK, 4, false), 1.0, 4.1, 0.75), put(P.cyl(0.012, 0.012, 1.6, INK, 4, false), 2.2, 4.1, 0.75));
   dress(g, [
     [P.longhouse(5.2), HOUSE],
-    [P.poster(1.25, 0.82, TEX.moved(), -0.05), [HOUSE[0] + 0.55, 0.62, HOUSE[2] + 1.5]],
+    [P.poster(1.25, 0.82, TEX.moved(), -0.05), [HOUSE[0] + 0.55, 0.75, HOUSE[2] + 1.5]],
     [P.longhouse(4, "#7a5a3c", "#6f9a50"), [5.4, 0.06, -SHORE - 7], -0.3],
-    [P.fishRack(), [1.2, 0.06, -SHORE - 2.6], 0.2],
-    [P.fishRack(), [3.4, 0.06, -SHORE - 3.4], -0.1],
+    [P.fishRack(), [2.9, 0.06, -SHORE - 4.4], 0.2],
+    [P.fishRack(), [7.0, 0.06, -SHORE - 3.0], -0.1],
     [P.barrel(0.8), [-5.4, 0.06, -SHORE - 2.4]],
     [P.crate(0.6, "FISH"), [-6.1, 0.06, -SHORE - 2.0], 0.3],
-    [P.sack(0.6), [0.2, 0.06, -SHORE - 1.6], 0.4],
-    [P.box(0.09, 2.0, 0.09, "#6b4a2d"), [2.6, 0.06, -SHORE - 1.2]],
-    [P.poster(1.5, 0.54, TEX.arrow(), 0.06), [2.6, 1.6, -SHORE - 1.14]],
+    [P.box(0.09, 2.0, 0.09, "#6b4a2d"), SIGNPOST],
+    [P.poster(1.5, 0.54, TEX.arrow(), 0.06), [SIGNPOST[0], 1.6, SIGNPOST[2] + 0.06]],
+    [P.fence(4.2, 0.7, "#8a6a4a"), [-6.0, 0.06, -SHORE - 6.2], 0.2],
+    [P.fence(3.6, 0.7, "#8a6a4a"), [1.8, 0.06, -SHORE - 6.0], -0.1],
+    [P.haystack(0.7), [0.4, 0.06, -SHORE - 5.4]],
+    [P.bush(0.5, "#6f9a50", 11), [-1.2, 0.06, -SHORE - 2.9]],
+    [P.bush(0.6, "#5f8a48", 12), [3.2, 0.06, -SHORE - 4.8]],
+    [P.crate(0.5, "WOOL"), [-4.4, 0.06, -SHORE - 2.9], 0.5],
+    [P.cart("#8a6a4a"), [6.6, 0.06, -SHORE - 4.6], 0.5],
+    [P.tree(4.5, "#5f9a48", 4), [-10, 0.06, -SHORE - 6]],
+    [P.tree(5, "#6f9a50", 6), [10.5, 0.06, -SHORE - 6.5]],
     [P.rock(0.4, "#8a8590", 2), [-6.5, 0.06, -SHORE - 0.9]],
     [P.rock(0.3, "#8a8590", 5), [6.6, 0.06, -SHORE - 1.0]],
     [P.bush(0.7, "#5f8a48", 3), [-5.6, 0.06, -SHORE - 5]],
     [P.pine(5, "#3f7a52", 2), [-7.5, 0.06, -SHORE - 8]],
     [P.pine(6, "#3f7a52", 7), [8.5, 0.06, -SHORE - 10]],
     [P.pine(4.5, "#3f7a52", 9), [1.4, 0.06, -SHORE - 12]],
-    [P.campfire(), [-0.4, 0.06, -SHORE - 3.4]],
+    [P.campfire(), [-0.4, 0.06, -SHORE - 3.8]],
   ]);
   const d = P.dock(SHORE - 1.0, 1.5); d.rotation.y = Math.PI / 2; d.position.set(-0.6, -0.1, -(SHORE + 1.2) / 2 - 0.2); g.add(d);
-  for (let i = 0; i < 5; i++) g.add(put(P.hill(16 + (i % 3) * 7, i % 2 ? "#6f9a58" : "#5f8a50", 0.3), -50 + i * 25, 0, -SHORE - 40));
   g.add(forSale);
   return (f: number) => { forSale.visible = f >= TIMES.sale; };
 });
 
-/** Greenland: ice behind, bergs in the bay, and Dad's house right on the beach */
-export const DAD_HOUSE: V3 = [1.2, 0.06, -SHORE - 2.6];
+/** Greenland: ice behind, bergs in the bay, and Dad's house right on the beach, with the dinner table out front */
+export const DAD_HOUSE: V3 = [1.6, 0.06, -SHORE - 3.0];
+export const TABLE: V3 = [-1.5, 0.06, -SHORE - 0.7];
 export const greenland = (): SetDef => water("greenland", "greenland", (g) => {
   dress(g, [
     [P.longhouse(4.6, "#7a6a5a", "#7f9a70"), DAD_HOUSE],
-    [P.poster(0.9, 0.32, TEX.dads()), [DAD_HOUSE[0] - 0.9, 1.62, DAD_HOUSE[2] + 1.46]],
-    [P.fishRack(), [-3.4, 0.06, -SHORE - 2.2], 0.3],
-    [P.barrel(0.7), [4.3, 0.06, -SHORE - 1.6]],
-    [P.crate(0.55, "SOUP"), [4.9, 0.06, -SHORE - 1.2], 0.4],
-    [P.campfire(), [-1.3, 0.06, -SHORE - 1.3]],
-    [P.table(1.1, 0.7, 0.6), [-0.3, 0.06, -SHORE - 0.9]],
-    [P.mug("#c9a06a"), [-0.5, 0.66, -SHORE - 0.9]],
-    [P.cyl(0.16, 0.1, 0.1, "#8a6a4a", 10), [-0.1, 0.66, -SHORE - 0.85]],
-    [P.sack(0.5), [-4.6, 0.06, -SHORE - 1.4]],
+    [P.framed(0.9, 0.32, TEX.dads(), "#6b4a2d"), [DAD_HOUSE[0] + 1.0, 0.95, DAD_HOUSE[2] + 1.44]],
+    [P.fishRack(), [-4.6, 0.06, -SHORE - 2.6], 0.3],
+    [P.barrel(0.7), [4.6, 0.06, -SHORE - 1.4]],
+    [P.crate(0.55, "SOUP"), [5.2, 0.06, -SHORE - 1.0], 0.4],
+    [P.campfire(), [-3.3, 0.06, -SHORE - 1.0]],
+    [P.table(1.1, 0.7, 0.6), TABLE],
+    [P.mug("#c9a06a"), [TABLE[0] + 0.3, 0.66, TABLE[2] + 0.1]],
+    [P.sack(0.5), [-5.4, 0.06, -SHORE - 1.2]],
+    [P.fence(3.4, 0.7, "#8a7a6a"), [-3.2, 0.06, -SHORE - 3.8], 0.1],
+    [P.crate(0.5, "ICE"), [3.6, 0.06, -SHORE - 3.4], -0.3],
+    [P.lantern(true), [DAD_HOUSE[0] + 0.25, 1.75, DAD_HOUSE[2] + 1.5]],
   ]);
 });
 /** the landing: Leif's camp on the forest shore, with the first houses going up */
 export const vinland = (): SetDef => water("forest", "harbour", (g) => {
   dress(g, [
-    [P.longhouse(3.6, "#9a7a52", "#5f9a48"), [3.4, 0.09, -SHORE - 5.2], -0.2],
+    [P.longhouse(3.6, "#9a7a52", "#5f9a48"), [3.6, 0.09, -SHORE - 5.6], -0.2],
     [P.campfire(), [1.6, 0.06, -SHORE - 3.5]],
-    [P.box(0.09, 1.9, 0.09, "#6b4a2d"), [-1.6, 0.06, -SHORE - 2.6]],
-    [P.poster(1.5, 0.54, TEX.vinland(), -0.04), [-1.6, 1.5, -SHORE - 2.54]],
-    [P.crate(0.55, "GRAPES"), [1.9, 0.06, -SHORE - 1.4], 0.3],
-    [P.barrel(0.7), [2.5, 0.06, -SHORE - 1.9]],
-    [P.sack(0.5), [3.2, 0.06, -SHORE - 1.3]],
+    [P.box(0.09, 1.9, 0.09, "#6b4a2d"), [0.0, 0.06, -SHORE - 4.4]],
+    [P.poster(1.5, 0.54, TEX.vinland(), -0.04), [0.0, 1.5, -SHORE - 4.34]],
+    [P.crate(0.55, "GRAPES"), [2.6, 0.06, -SHORE - 2.6], 0.3],
+    [P.barrel(0.7), [3.3, 0.06, -SHORE - 3.0]],
+    [P.sack(0.5), [-1.4, 0.06, -SHORE - 3.3]],
   ]);
 });

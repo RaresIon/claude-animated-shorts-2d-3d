@@ -267,7 +267,7 @@ export const dress = (root: THREE.Object3D, items: [THREE.Object3D, V3, number?,
 // ---------------------------------------------------------------- sea and north
 /** a clinker longship about `len` metres long, bow toward +x: curved hull, shield row, mast, striped sail, dragon
  *  prow. Deck height is `LONGSHIP_DECK` above its origin; put the origin at the waterline. */
-export const LONGSHIP_DECK = 0.8;
+export const LONGSHIP_DECK = 0.95;
 export const longship = (len = 9, sail: [string, string] = ["#c8413a", "#f3ead2"], wood = "#8a5a30") => {
   const g = group(), half = len / 2, beam = 1.15;
   const outline = new THREE.Shape(); const N = 24;
@@ -281,17 +281,17 @@ export const longship = (len = 9, sail: [string, string] = ["#c8413a", "#f3ead2"
   g.add(at(box(len * 0.82, 0.06, beam * 1.5, planks(shade(wood, 1.25), 5), false), 0, LONGSHIP_DECK - 0.06, 0)); // deck
   const cols = ["#c8413a", "#e2b84a", "#3d6a8a", "#f3ead2", "#4f7a4a"];
   for (let i = 0; i < 9; i++) for (const s of [-1, 1]) { const x = -half * 0.62 + i * (len * 0.62 / 8), u = (x + half) / len, w = beam * Math.sin(Math.PI * u) ** 0.55; // shields
-    const sh = cyl(0.21, 0.21, 0.05, cols[(i + (s > 0 ? 0 : 2)) % 5], 14); g.add(at(sh, x, 0.3 + 1.25 * (Math.abs(x) / half) ** 2.4, s * (w + 0.03), 0, Math.PI / 2 * s)); g.add(at(ball(0.05, "#8a8590", 1, false), x, 0.46 + 1.25 * (Math.abs(x) / half) ** 2.4, s * (w + 0.08))); }
-  g.add(at(cyl(0.07, 0.09, 5.2, shade(wood, 0.8), 8), 0, LONGSHIP_DECK, 0), at(box(0.09, 0.09, 3.6, shade(wood, 0.8)), 0, 5.2, 0)); // mast and yard
+    const sh = cyl(0.21, 0.21, 0.05, cols[(i + (s > 0 ? 0 : 2)) % 5], 14); g.add(at(sh, x, 0.5 + 1.25 * (Math.abs(x) / half) ** 2.4, s * (w + 0.03), 0, Math.PI / 2 * s)); g.add(at(ball(0.05, "#8a8590", 1, false), x, 0.66 + 1.25 * (Math.abs(x) / half) ** 2.4, s * (w + 0.08))); }
+  g.add(at(cyl(0.07, 0.09, 6.4, shade(wood, 0.8), 8), 0, LONGSHIP_DECK, 0), at(box(0.09, 0.09, 4.4, shade(wood, 0.8)), 0, 7.1, 0, -0.75)); // mast and yard (braced round so the sail reads from the side)
   const st = sign(`sail${sail.join("")}`, 512, 512, sail[1], [], INK, (c) => { c.fillStyle = sail[0]; for (let i = 0; i < 4; i++) c.fillRect(i * 128, 0, 64, 512); });
-  const sg = new THREE.PlaneGeometry(3.4, 3.4, 8, 8); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) sp.setZ(i, 0.45 * Math.cos((sp.getX(i) / 1.7) * 1.4) * Math.cos((sp.getY(i) / 1.7) * 1.2)); sg.computeVertexNormals(); sg.rotateY(Math.PI / 2);
-  const sm = new THREE.MeshLambertMaterial({ map: st, side: THREE.DoubleSide }); g.add(at(new THREE.Mesh(sg, sm), 0.3, 3.5, 0));
+  const sg = new THREE.PlaneGeometry(4.2, 3.3, 8, 8); const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) sp.setZ(i, 0.5 * Math.cos((sp.getX(i) / 2.1) * 1.4) * Math.cos((sp.getY(i) / 1.65) * 1.2)); sg.computeVertexNormals(); sg.rotateY(Math.PI / 2 - 0.75);
+  const sm = new THREE.MeshLambertMaterial({ map: st, side: THREE.DoubleSide }); g.add(at(new THREE.Mesh(sg, sm), 0.25, 5.4, 0)); // high enough that nobody on deck is hidden behind it
   const neck = new THREE.CatmullRomCurve3([[half - 0.25, 1.75, 0], [half + 0.1, 2.5, 0], [half + 0.05, 3.2, 0], [half + 0.5, 3.5, 0]].map((q) => new THREE.Vector3(...q)));
   g.add(inked(new THREE.TubeGeometry(neck, 10, 0.13, 7), lit(shade(wood, 0.85))), at(ball(0.2, "#c8413a", 0.9), half + 0.62, 3.32, 0), at(ball(0.05, "#f3ead2", 1, false), half + 0.7, 3.52, 0.14), at(ball(0.05, "#f3ead2", 1, false), half + 0.7, 3.52, -0.14));
   const tail = new THREE.CatmullRomCurve3([[-half + 0.25, 1.75, 0], [-half - 0.1, 2.5, 0], [-half + 0.1, 3.0, 0], [-half + 0.45, 2.85, 0]].map((q) => new THREE.Vector3(...q)));
   g.add(inked(new THREE.TubeGeometry(tail, 10, 0.11, 7), lit(shade(wood, 0.85))));
-  for (const s of [-1, 1]) for (let i = 0; i < 5; i++) g.add(at(cyl(0.025, 0.025, 2.4, "#c9a06a", 5, false), -1.8 + i * 0.9, 0.5, s * 1.0, 0, s * 1.25, 0)); // oars
-  g.add(at(barrel(0.5), -2.6, LONGSHIP_DECK, 0.3), at(crate(0.42, "FISH"), -3.1, LONGSHIP_DECK, -0.3, 0.4), at(sack(0.4), 2.7, LONGSHIP_DECK, -0.2));
+  for (const s of [-1, 1]) for (let i = 0; i < 5; i++) g.add(at(cyl(0.025, 0.025, 2.2, "#c9a06a", 5, false), -1.8 + i * 0.9, 0.3, s * 1.0, 0, s * 1.3, 0)); // oars
+  g.add(at(barrel(0.5), -2.6, LONGSHIP_DECK, 0.3), at(crate(0.42, "FISH"), -3.1, LONGSHIP_DECK, -0.3, 0.4));
   return g;
 };
 export const pine = (h = 5, leaf = "#2f6a4a", seed = 1) => {
@@ -302,7 +302,7 @@ export const pine = (h = 5, leaf = "#2f6a4a", seed = 1) => {
 /** a wall of ice: faceted blue-white blocks, for Greenland and icebergs */
 export const glacier = (w = 12, h = 6, seed = 1, cols = ["#dff2fb", "#bfe3f5", "#eaf7fd", "#a8d4ec"]) => {
   const r = rng(seed), g = group();
-  for (let i = 0; i < Math.round(w / 1.6); i++) { const bw = 1.4 + r() * 1.4, bh = h * (0.55 + r() * 0.5), geo = new THREE.CylinderGeometry(bw * 0.35, bw * 0.62, bh, 5 + Math.floor(r() * 3)); geo.translate(0, bh / 2, 0);
+  for (let i = 0; i < Math.round(w / 1.6); i++) { const bw = 1.6 + r() * 1.6, bh = h * (0.5 + r() * 0.6), geo = new THREE.CylinderGeometry(bw * (0.04 + r() * 0.16), bw * 0.75, bh, 4 + Math.floor(r() * 2)); geo.translate(0, bh / 2, 0); // jagged peaks, not columns
     g.add(at(inked(geo, lit(cols[i % cols.length])), -w / 2 + i * 1.6 + r() * 0.5, 0, (r() - 0.5) * 1.6, r() * 3)); }
   return g;
 };
@@ -317,7 +317,7 @@ export const longhouse = (w = 5, wall = "#8a6a4a", turf = "#5f8a48") => {
   for (const s of [-1, 1]) g.add(at(box(0.1, 1.0, 0.1, "#5a3d24"), s * (w / 2 + 0.2), 2.3, 1.2, 0, 0, s * 0.5));
   return g;
 };
-const grassTex = (c: string) => planks(c, 9, true);
+const grassTex = (c: string) => planks(c, 9, true, [4, 2]);
 export const dock = (len = 6, w = 1.6) => { const g = group(at(box(len, 0.12, w, planks("#9a7a52", 5, false, [3, 1])), 0, 0.5, 0)); for (let x = -len / 2 + 0.3; x <= len / 2; x += 1.4) for (const s of [-1, 1]) g.add(at(cyl(0.09, 0.1, 1.3, "#6b4a2d", 7), x, -0.5, s * (w / 2 - 0.1))); return g; };
 export const fishRack = () => { const g = group(contact(2.2, 0.8), at(box(0.07, 1.6, 0.07, "#8a6a4a"), -0.9, 0, 0), at(box(0.07, 1.6, 0.07, "#8a6a4a"), 0.9, 0, 0), at(box(1.9, 0.06, 0.06, "#8a6a4a"), 0, 1.55, 0)); for (let i = 0; i < 6; i++) { const geo = new THREE.SphereGeometry(0.1, 7, 5); geo.scale(0.6, 2.2, 0.3); g.add(at(inked(geo, lit(i % 2 ? "#c9d7e8" : "#a9bcd0")), -0.7 + i * 0.28, 1.25, 0)); } return g; };
 export const campfire = () => group(at(lightPool(3.2, 3.2, "#ffb84a", 0.6), 0, 0.02, 0), at(cyl(0.05, 0.05, 0.7, "#5a3d24", 5), 0, 0.05, 0, 0, 0, 1.2), at(cyl(0.05, 0.05, 0.7, "#5a3d24", 5), 0, 0.05, 0, 1.6, 0, 1.2), at(new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 7).translate(0, 0.4, 0), glow("#ffb347")), 0, 0, 0), at(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.4, 7).translate(0, 0.35, 0), glow("#fff1b8")), 0, 0, 0));

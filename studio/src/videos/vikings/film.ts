@@ -6,20 +6,20 @@ import { CastItem, Film, Shot, clock } from "../../stage/Stage";
 import { Cam, shake, track } from "../../stage/camera";
 import { Look, Pose, blinkAt, talk } from "../../stage/chars";
 import { V3, burst, overshoot, prog } from "../../stage/util";
-import { DAD_HOUSE, HOUSE, SHORE, TEX, TIMES, coast1, coast2, coast3, fog, greenland, harbour, hook, onDeck, shipPose, vinland } from "./sets";
+import { DAD_HOUSE, HOUSE, SHORE, SIGNPOST, TABLE, TEX, TIMES, coast1, coast3, fog, greenland, harbour, hook, onDeck, run, shipPose, vinland } from "./sets";
 import words from "./words.json";
 
 const F = (w: string, n = 0, d = 0) => { const m = words.filter((x) => x.w.toLowerCase().replace(/[^a-z0-9']/g, "") === w); if (!m[n]) throw new Error(`word not found: ${w} #${n}`); return Math.round(m[n].s * 30) + d; };
 export const TOTAL = Math.round(words[words.length - 1].e * 30) + 12;
 // shot boundaries, each on the first word of its sentence
 const T = { year: F("it's", 0, -3), but: F("but", 0, -2), noMap: F("no", 0, -2), fog: F("three", 0, -1), wind: F("and", 1, -2), clears: F("when", 0, -2), crew: F("crew", 0, -5), times: F("he", 0, -2), third: F("three", 2, -2), zero: F("coasts", 0, 6), finds: F("he", 1, -2), see: F("you", 0, -2), later: F("years", 0, -2), follows: F("follows", 0, -2), walks: F("walks", 0, -4), all: F("all", 0, -2) };
-TIMES.slide = T.finds + 3; TIMES.bump = F("parks", 0, 16); TIMES.sale = T.later; // the sets animate on these
+TIMES.slide = T.finds + 3; TIMES.bump = F("parks", 0, 16); TIMES.sale = T.later; TIMES.runA = T.times; TIMES.runB = T.third; // the sets animate on these
 const LINE = { howHard: [F("how"), F("be", 0, 12)], keep: [F("no", 2), F("sailing", 0, 14)] };
 const say = (k: keyof typeof LINE) => talk(clock.real, LINE[k][0], LINE[k][1]);
 
 // ---------------------------------------------------------------- cast
 const BJARNI: Look = { coat: "#3d6a8a", trim: "#27304a", hat: "helmet", hatCol: "#b8c0c8", band: "#c9a03a", beard: "#c9762e", stout: true };
-const OLD_BJARNI: Look = { ...BJARNI, beard: "#c9c9c9", hat: "fur", hatCol: "#8a6a4a" };
+const OLD_BJARNI: Look = { ...BJARNI, beard: "#dcdcdc", hatCol: "#8f979e" }; // the same man and helmet, a grey beard
 const CREW: Look[] = [
   { coat: "#7a4a34", hat: "hood", hatCol: "#5a6a4a", beard: "#5a3a24" },
   { coat: "#5a7a4a", hat: "helmet", hatCol: "#a8a096", band: "#8a8590", beard: "#e2c66a" },
@@ -65,28 +65,28 @@ const s2 = (f: number): CastItem[] => {
 };
 
 // 3. THE NOTE (insert), then the signpost, then the ship: "No map. No compass. How hard can it be?" (his line).
-const NOTE: V3 = [HOUSE[0] + 0.55, 1.03, HOUSE[2] + 1.5];
+const NOTE: V3 = [HOUSE[0] + 0.55, 1.16, HOUSE[2] + 1.5];
 const s3 = (f: number): CastItem[] => {
   const sign = f >= F("a", 1, -3);
   return [
-    person("bjarni", BJARNI, sign ? [3.75, 0.06, -SHORE - 1.3] : [NOTE[0] - 1.0, 0.06, NOTE[2] + 0.35], sign ? { eyes: "side", mouth: "wave", face: -0.8, look: [-0.9, -0.2], brow: -0.6, rh: [0.4, 1.0], lh: [-0.7, -0.9], squash: pop(f, F("a", 1, 2)), sweat: true } : { eyes: "wide", mouth: "o", brow: -1, face: 0.8, look: [0.9, 0], rh: [0.3, 1.0], lh: [-0.3, 1.0], heldL: "sack", squash: pop(f, F("moved")), tilt: bob(f) }, f, 1, 1.66),
-    ...(sign ? [fx("q", TEX.q(), [3.75, 2.25, -SHORE - 1.3], 0.34 * overshoot(prog(f, F("never"), 6)), 0.42 * overshoot(prog(f, F("never"), 6)), f >= F("never") ? 1 : 0)] : []),
+    person("bjarni", BJARNI, sign ? [SIGNPOST[0] + 1.15, 0.06, SIGNPOST[2] - 0.1] : [NOTE[0] - 1.05, 0.06, NOTE[2] + 0.5], sign ? { eyes: "side", mouth: "wave", face: -0.8, look: [-0.9, -0.2], brow: -0.6, rh: [0.4, 1.0], lh: [-0.7, -0.9], squash: pop(f, F("a", 1, 2)), sweat: true } : { eyes: "wide", mouth: "o", brow: -1, face: 0.8, look: [0.9, 0], rh: [0.3, 1.0], lh: [-0.3, 1.0], heldL: "sack", squash: pop(f, F("moved")), tilt: bob(f) }, f, 1, 1.66),
+    ...(sign ? [fx("q", TEX.q(), [SIGNPOST[0] + 1.15, 2.25, SIGNPOST[2] - 0.1], 0.34 * overshoot(prog(f, F("never"), 6)), 0.42 * overshoot(prog(f, F("never"), 6)), f >= F("never") ? 1 : 0)] : []),
   ];
 };
 const s34cam = (f: number): Cam => track(f, [
-  { f: T.but, cam: { pos: [NOTE[0] - 0.6, 1.25, NOTE[2] + 2.9], look: [NOTE[0] - 0.3, 1.15, NOTE[2]], fov: 38, roll: 0.07 }, rate: 0.003 },
-  { f: F("a", 1, -3), cam: { pos: [2.6, 1.3, -SHORE + 4.4], look: [3.0, 1.55, -SHORE - 1.2], fov: 44, roll: -0.08 }, dur: 12 },
-  { f: T.noMap, cam: { pos: [3.6, 1.2, 4.2], look: [1.0, 1.9, 0], fov: 46, roll: -0.09 }, dur: 12 },
+  { f: T.but, cam: { pos: [NOTE[0] + 0.1, 1.15, NOTE[2] + 3.3], look: [NOTE[0] - 0.05, 0.85, NOTE[2]], fov: 38, roll: 0.07 }, rate: 0.003 },
+  { f: F("a", 1, -3), cam: { pos: [SIGNPOST[0], 1.3, -SHORE + 4.6], look: [SIGNPOST[0] + 0.45, 1.5, SIGNPOST[2]], fov: 44, roll: -0.08 }, dur: 12 },
+  { f: T.noMap, cam: { pos: [3.6, 1.4, 4.6], look: [1.3, 2.25, 0], fov: 46, roll: -0.09 }, dur: 12 },
   { f: F("how", 0, -2), cam: { pos: [3.9, 1.3, 3.0], look: [2.0, 2.0, 0], fov: 40, roll: -0.06 }, dur: 9 },
 ]);
 const s34 = (f: number): CastItem[] => (f < T.noMap ? s3(f) : s4(f));
 const s4 = (f: number): CastItem[] => {
-  const a = F("map", 0, -2), b = F("compass", 0, -2), h = F("how", 0, -2), c0 = onDeck("harbour", f, 0.2);
+  const a = F("map", 0, -2), b = F("compass", 0, -2), h = F("how", 0, -2), c0 = onDeck("harbour", f, 0.7);
   return [
     person("bjarni", BJARNI, onDeck("harbour", f, 2.0), f >= h ? { eyes: "happy", mouth: say("howHard") ?? "grin", face: -0.4, rh: [1.0, -0.7], lh: [-0.8, -0.2], squash: pop(f, h), tilt: bob(f) } : { eyes: "lid", mouth: "smile", face: -0.5, rh: [0.3, 1.0], lh: [-0.3, 1.0], tilt: bob(f) }, f, 1, 1.66),
-    ...crew("harbour", f, (i) => (i === 0 ? { eyes: "wide", mouth: "wave", brow: -1, face: 0.5, rh: [0.9, f >= a ? -0.6 : 0.9], lh: [-0.9, f >= b ? -0.6 : 0.9], squash: pop(f, a) * pop(f, b), sweat: f >= b } : { eyes: "lid", mouth: "dash", brow: -0.4, face: 0.5, rh: [0.3, 1.1], lh: [-0.3, 1.1] })),
-    ...(f >= a ? [fx("nomap", TEX.noMap(), [c0[0] + 0.75, c0[1] + 2.2, 0.05], 0.7 * overshoot(prog(f, a, 6)), 0.7 * overshoot(prog(f, a, 6)), f < h + 6 ? 1 : 0)] : []),
-    ...(f >= b ? [fx("nocomp", TEX.noCompass(), [c0[0] - 0.75, c0[1] + 2.2, 0.05], 0.7 * overshoot(prog(f, b, 6)), 0.7 * overshoot(prog(f, b, 6)), f < h + 6 ? 1 : 0)] : []),
+    ...crew("harbour", f, (i) => (i === 0 ? { eyes: "wide", mouth: f >= h ? "dash" : "wave", brow: -1, face: 0.5, rh: [0.9, f >= a ? -0.6 : 0.9], lh: [-0.9, f >= b ? -0.6 : 0.9], squash: pop(f, a) * pop(f, b), sweat: f >= b } : { eyes: "lid", mouth: "dash", brow: -0.4, face: 0.5, rh: [0.3, 1.1], lh: [-0.3, 1.1] })),
+    ...(f >= a ? [fx("nomap", TEX.noMap(), [c0[0] + 0.3, c0[1] + 2.2, 0.6], 0.7 * overshoot(prog(f, a, 6)), 0.7 * overshoot(prog(f, a, 6)), f < h + 6 ? 1 : 0)] : []),
+    ...(f >= b ? [fx("nocomp", TEX.noCompass(), [c0[0] + 1.1, c0[1] + 2.2, 0.6], 0.7 * overshoot(prog(f, b, 6)), 0.7 * overshoot(prog(f, b, 6)), f < h + 6 ? 1 : 0)] : []),
   ];
 };
 
@@ -107,7 +107,7 @@ const s5b = (f: number): CastItem[] => [
 //    begs. Bjarni takes one look: "No glaciers. Not Greenland. Keep sailing!" (his line, from a low angle).
 const s6cam = (f: number): Cam => track(f, [
   { f: T.clears, cam: { pos: [-2.4, 1.8, 4.2], look: [-0.9, 1.8, 0], fov: 44, roll: 0.05 } },
-  { f: F("there's", 0, -2), cam: { pos: [-2.6, 3.7, 5.4], look: [-2.0, 3.8, -14], fov: 50, roll: -0.05 }, dur: 12 },
+  { f: F("there's", 0, -2), cam: { pos: [-1.6, 2.2, 4.8], look: [-0.5, 2.75, -14], fov: 50, roll: -0.05 }, dur: 12 },
 ]);
 const s6 = (f: number): CastItem[] => {
   const land = f >= F("there's", 0, -2);
@@ -133,26 +133,28 @@ const s7 = (f: number): CastItem[] => {
   ];
 };
 
-// 6. THREE TIMES: coast two, coast three, a number on each, and Bjarni pointing past them. Then, from the beach:
-//    smooth sand, a ship leaving, and a zero.
-const passCam = (a: number, side: number) => (f: number): Cam => track(f, [{ f: a, cam: { pos: [side * 2.2, 2.7, 5.2], look: [side * -0.2, 1.7, -2], fov: 46, roll: side * 0.07 }, rate: 0.003 }]);
-const pass = (set: string, a: number, n: string) => (f: number): CastItem[] => [
-  person("bjarni", BJARNI, onDeck(set, f, 2.0), { eyes: "angry", mouth: "frown", brow: 1, face: 0.6, rh: [1.1, -0.5], lh: [-0.4, 1.0], squash: pop(f, a + 6) }, f, 1, 1.66),
-  ...crew(set, f, (i) => ({ eyes: "lid", mouth: "frown", face: -0.6, look: [-0.8, 0.2], rh: [0.3, 1.1], lh: [-0.9, -0.6 - 0.1 * wave(f + i * 4, 0.5)], tilt: 0.1 })),
-  fx(`n${n}`, TEX.num(n), [-0.3, 3.6, -0.5], 1.5 * overshoot(prog(f, a + 5, 7)), 1.5 * overshoot(prog(f, a + 5, 7)), f >= a + 5 ? 1 : 0),
-];
-const s8ccam = (f: number): Cam => track(f, [{ f: T.zero, cam: { pos: [1.2, 0.35, -SHORE - 4.4], look: [0.2, 0.75, -2], fov: 44, roll: 0.08 }, rate: 0.003 }]);
-const s8c = (f: number): CastItem[] => [
-  person("bjarni", BJARNI, onDeck("coast2", f, -2.6), { eyes: "lid", mouth: "dash", face: 0.6, rh: [1.0, -0.5], lh: [-0.4, 1.0] }, f, 1, 1.66),
-  ...crew("coast2", f, (i) => ({ eyes: "lid", mouth: "frown", face: -0.5, rh: [-0.8, -0.9 + 0.15 * wave(f + i * 3, 0.5)], lh: [-0.3, 1.1] }), [0.8, 0.0, -0.9]),
-  fx("zero", TEX.num("0"), [0.3, 0.75, -SHORE - 2.2], 1.1 * overshoot(prog(f, F("zero", 0, -2), 7)), 1.1 * overshoot(prog(f, F("zero", 0, -2), 7)), f >= F("zero", 0, -2) ? 1 : 0),
-];
+// 6. THREE TIMES, in one take: the ship holds the frame while a second coast, then a third, slide past behind it,
+//    a number on each, Bjarni pointing on. Then the camera tips over the side to the beach: smooth sand, and a zero.
+const s8cam = (f: number): Cam => track(f, [
+  { f: T.times, cam: { pos: [2.6, 2.9, 5.6], look: [0.4, 2.0, -2], fov: 46, roll: 0.07 }, rate: 0.003 },
+  { f: F("zero", 0, -6), cam: { pos: [0.9, 3.1, -SHORE + 2.2], look: [0.9, 0.2, -SHORE - 2.6], fov: 44, roll: -0.07 }, dur: 12 },
+]);
+const s8 = (f: number): CastItem[] => {
+  const z = F("zero", 0, -6), n2 = T.times + 5, n3 = T.third + 6;
+  return [
+    person("bjarni", BJARNI, onDeck("run", f, 2.0), { eyes: "angry", mouth: "frown", brow: 1, face: 0.6, rh: [1.1, -0.5], lh: [-0.4, 1.0], squash: pop(f, n2) * pop(f, n3) }, f, 1, 1.66),
+    ...crew("run", f, (i) => ({ eyes: "lid", mouth: "frown", face: -0.6, look: [-0.8, 0.2], rh: [0.3, 1.1], lh: [-0.9, -0.6 - 0.1 * wave(f + i * 4, 0.5)], tilt: 0.1 })),
+    fx("n2", TEX.num("2"), [2.9, 3.5, 0.9], 1.2 * overshoot(prog(f, n2, 7)), 1.2 * overshoot(prog(f, n2, 7)), f >= n2 && f < T.third - 6 ? 1 : 0),
+    fx("n3", TEX.num("3"), [2.9, 3.5, 0.9], 1.2 * overshoot(prog(f, n3, 7)), 1.2 * overshoot(prog(f, n3, 7)), f >= n3 && f < z ? 1 : 0),
+    fx("zero", TEX.num("0"), [0.9, 0.3, -SHORE - 2.6], 1.4 * overshoot(prog(f, F("zero", 0, -2), 7)), 1.3 * overshoot(prog(f, F("zero", 0, -2), 7)), f >= F("zero", 0, -2) ? 1 : 0),
+  ];
+};
 
 // 7. GREENLAND: ice, a bay, and the ship sliding in to stop exactly at Dad's door. Then dinner, and Dad's ladle.
-const DAD_AT: V3 = [DAD_HOUSE[0] - 0.9, 0.06, DAD_HOUSE[2] + 1.85];
+const DAD_AT: V3 = [DAD_HOUSE[0] - 0.92, 0.06, DAD_HOUSE[2] + 2.0];
 const s9cam = (f: number): Cam => shake(track(f, [
   { f: T.finds, cam: { pos: [-3.5, 2.6, 8.5], look: [-1.5, 1.6, -4], fov: 46, roll: -0.06 } },
-  { f: F("parks", 0, -3), cam: { pos: [3.4, 1.6, -4.2], look: [0.4, 1.3, -SHORE - 1.7], fov: 40, roll: 0.08 }, dur: 12 },
+  { f: F("parks", 0, -3), cam: { pos: [3.8, 1.6, -3.9], look: [DAD_AT[0] - 0.3, 1.25, DAD_AT[2]], fov: 40, roll: 0.08 }, dur: 12 },
 ]), f, TIMES.bump, 0.08);
 const s9 = (f: number): CastItem[] => {
   const home = f >= F("never", 1, -2);
@@ -163,25 +165,24 @@ const s9 = (f: number): CastItem[] => {
     ...crew("greenland", f, (i) => (f >= TIMES.bump ? { eyes: "squeeze", mouth: "open", face: -0.4, rh: [0.9, -1.0], lh: [-0.9, -1.0], blink: false, squash: pop(f, TIMES.bump + 2 + i * 3) } : { eyes: "lid", mouth: "frown", face: 0.4, rh: [0.3, 1.1], lh: [-0.3, 1.1], tilt: 0.1 })),
   ];
 };
-const TABLE: V3 = [-0.3, 0.06, -SHORE - 0.9];
 const dinner = (f: number, last: boolean): CastItem[] => {
   const late = F("late", 0, -2), stop = F("refused", 0, -2), sl = wave(f, 0.5) > 0;
   return [
-    person("bjarni", last ? OLD_BJARNI : BJARNI, [TABLE[0] - 0.62, 0.06, TABLE[2] - 0.1], last ? { eyes: f >= stop ? "happy" : "lid", mouth: f >= stop ? "smile" : sl ? "o" : "dash", face: 0.3, rh: [0.2, f >= stop ? -0.2 : 0.15], held: "bowl", lh: [-0.9, f >= stop ? -0.7 : 1.0], squash: pop(f, stop), tilt: bob(f) } : { eyes: f >= late ? "side" : "happy", mouth: f >= late ? "wave" : sl ? "o" : "smile", face: 0.3, look: [0.9, -0.2], rh: [0.2, 0.15], held: "bowl", lh: [-0.3, 1.0], sweat: f >= late, squash: pop(f, late) }, f, 1, 1.66),
-    person("dad", DAD, [TABLE[0] + 0.66, 0.06, TABLE[2] - 0.12], last ? { eyes: "lid", mouth: "smile", face: -0.5, rh: [0.4, 0.9], held: "ladle", lh: [-0.4, 1.0], tilt: bob(f, 2) } : { eyes: "angry", mouth: f >= late ? "open" : "frown", brow: 1, face: -0.6, rh: [f >= late ? -0.6 : 0.5, f >= late ? -0.9 : 0.2], held: "ladle", lh: [-0.6, 0.3], squash: pop(f, late) * antic(f, late), lean: f >= late ? -0.08 : 0 }, f, 30, 1.6),
+    person("bjarni", last ? OLD_BJARNI : BJARNI, [TABLE[0] - 0.62, 0.06, TABLE[2] - 0.1], last ? { eyes: f >= stop ? "happy" : "lid", mouth: f >= stop ? "smile" : sl ? "o" : "dash", face: 0.3, rh: [f >= stop ? 0.9 : 0.2, f >= stop ? -0.45 : 0.15], held: "bowl", lh: [-0.9, f >= stop ? -0.45 : 1.0], squash: pop(f, stop), tilt: f >= stop ? 0.1 : bob(f) } : { eyes: f >= late ? "side" : "happy", mouth: f >= late ? "wave" : sl ? "o" : "smile", face: 0.3, look: [0.9, -0.2], rh: [0.2, 0.15], held: "bowl", lh: [-0.3, 1.0], sweat: f >= late, squash: pop(f, late) }, f, 1, 1.66),
+    person("dad", DAD, [TABLE[0] + 0.66, 0.06, TABLE[2] - 0.12], last ? (f >= stop + 4 ? { eyes: "squeeze", mouth: "frown", face: -0.3, rh: [-0.55, -1.15], lh: [-0.4, 1.0], heldL: "ladle", tilt: 0.1, blink: false, squash: pop(f, stop + 4) } : { eyes: "lid", mouth: "dash", brow: 0.4, face: -0.5, rh: [0.4, 0.9], held: "ladle", lh: [-0.4, 1.0], tilt: bob(f, 2) }) : { eyes: "angry", mouth: f >= late ? "open" : "frown", brow: 1, face: -0.6, rh: [f >= late ? -0.6 : 0.5, f >= late ? -0.9 : 0.2], held: "ladle", lh: [-0.6, 0.3], squash: pop(f, late) * antic(f, late), lean: f >= late ? -0.08 : 0 }, f, 30, 1.6),
     fx("steam", TEX.steam(), [TABLE[0] - 0.1, 1.05 + 0.08 * Math.sin(f * 0.2), TABLE[2]], 0.3, 0.45, 0.5 + 0.2 * Math.sin(f * 0.15)),
   ];
 };
 const s10cam = (f: number): Cam => track(f, [
-  { f: T.see, cam: { pos: [-1.0, 1.5, -SHORE + 3.9], look: [-0.3, 1.2, TABLE[2]], fov: 44, roll: 0.06 } },
-  { f: F("late", 0, -2), cam: { pos: [-0.9, 1.0, -SHORE + 2.9], look: [-0.2, 1.35, TABLE[2]], fov: 42, roll: -0.07 }, dur: 9 },
+  { f: T.see, cam: { pos: [TABLE[0] - 0.3, 1.5, TABLE[2] + 4.6], look: [TABLE[0], 1.15, TABLE[2]], fov: 42, roll: 0.06 } },
+  { f: F("late", 0, -2), cam: { pos: [TABLE[0] - 0.7, 1.0, TABLE[2] + 3.3], look: [TABLE[0] + 0.05, 1.35, TABLE[2]], fov: 42, roll: -0.07 }, dur: 9 },
 ]);
 
 // 8. YEARS LATER: the same ship, a sign on its side, and Leif counting out coins. The story run backwards, three,
 //    two, one. And a boot on the sand: the first footprints.
 const s11cam = (f: number): Cam => track(f, [
-  { f: T.later, cam: { pos: [2.2, 1.6, 6.6], look: [1.7, 1.25, 0.4], fov: 44, roll: -0.06 } },
-  { f: F("buys", 0, -2), cam: { pos: [2.4, 2.0, 4.6], look: [1.7, 1.9, 0], fov: 40, roll: 0.05 }, dur: 10 },
+  { f: T.later, cam: { pos: [1.9, 2.7, 7.4], look: [1.65, 2.6, 0.4], fov: 44, roll: -0.05 } },
+  { f: F("buys", 0, -2), cam: { pos: [1.7, 2.3, 5.6], look: [1.7, 2.55, 0], fov: 44, roll: 0.05 }, dur: 10 },
 ]);
 const s11 = (f: number): CastItem[] => {
   const buy = F("buys", 0, -2);
@@ -193,7 +194,7 @@ const s11 = (f: number): CastItem[] => {
 const s12cam = (f: number): Cam => track(f, [{ f: T.follows, cam: { pos: [5.6, 1.5, 3.6], look: [2.4, 2.3, -0.3], fov: 46, roll: -0.11 }, rate: 0.003 }]);
 const s12 = (f: number): CastItem[] => [
   person("leif", LEIF, onDeck("coast3", f, 2.6), { eyes: "happy", mouth: "grin", face: 0.6, rh: [1.1, -0.6], lh: [-0.4, 1.0], lean: 0.06, tilt: bob(f) }, f, 40, 1.7),
-  ...["3", "2", "1"].map((n, i) => fx(`back${n}`, TEX.num(n), [2.2, 3.9, 0.6], 1.3 * overshoot(prog(f, T.follows + 5 + i * 11, 6)), 1.3 * overshoot(prog(f, T.follows + 5 + i * 11, 6)), f >= T.follows + 5 + i * 11 && f < T.follows + 16 + i * 11 ? 1 : 0)),
+  ...["3", "2", "1"].map((n, i) => fx(`back${n}`, TEX.num(n), [1.5, 3.3, 0.8], 1.3 * overshoot(prog(f, T.follows + 5 + i * 11, 6)), 1.3 * overshoot(prog(f, T.follows + 5 + i * 11, 6)), f >= T.follows + 5 + i * 11 && f < T.follows + 16 + i * 11 ? 1 : 0)),
 ];
 const stepX = (f: number) => 2.2 - 2.6 * prog(f, T.walks, F("500") - 6 - T.walks);
 const s13cam = (f: number): Cam => track(f, [
@@ -208,19 +209,17 @@ const s13 = (f: number): CastItem[] => {
   return c;
 };
 // 9. THE LAST WORD goes to Bjarni: grey now, by the fire in Greenland, with his soup. He regrets nothing.
-const s14cam = (f: number): Cam => track(f, [{ f: T.all, cam: { pos: [0.4, 1.5, -SHORE + 4.0], look: [-0.3, 1.2, TABLE[2]], fov: 42, roll: 0.05 }, rate: 0.0035 }]);
+const s14cam = (f: number): Cam => track(f, [{ f: T.all, cam: { pos: [TABLE[0] + 0.6, 1.5, TABLE[2] + 4.5], look: [TABLE[0], 1.2, TABLE[2]], fov: 42, roll: 0.05 }, rate: 0.0035 }]);
 
 const shots: Shot[] = [
   { a: 0, b: T.year, set: "hook", mood: "day", cam: s1cam, cast: s1 },
   { a: T.year, b: T.but, set: "harbour", mood: "day", cam: s2cam, cast: s2, into: "dissolve" },
-  { a: T.but, b: T.fog, set: "harbour", mood: "day", cam: s34cam, cast: s34, into: "move" },
+  { a: T.but, b: T.fog, set: "harbour", mood: "day", cam: s34cam, cast: s34, into: "move", tag: "insert" },
   { a: T.fog, b: T.wind, set: "fog", mood: "fog", cam: s5cam, cast: s5, into: "dissolve" },
   { a: T.wind, b: T.clears, set: "fog", mood: "fog", cam: s5bcam, cast: s5b, into: "move", tag: "wide" },
   { a: T.clears, b: T.crew, set: "coast1", mood: "day", cam: s6cam, cast: s6, into: "dissolve" },
   { a: T.crew, b: T.times, set: "coast1", mood: "day", cam: s7cam, cast: s7, into: "move" },
-  { a: T.times, b: T.third, set: "coast2", mood: "golden", cam: passCam(T.times, 1), cast: pass("coast2", T.times, "2"), into: "dissolve" },
-  { a: T.third, b: T.zero, set: "coast3", mood: "dusk", cam: passCam(T.third, -1), cast: pass("coast3", T.third, "3"), into: "dissolve" },
-  { a: T.zero, b: T.finds, set: "coast2", mood: "golden", cam: s8ccam, cast: s8c, into: "dissolve", tag: "insert" },
+  { a: T.times, b: T.finds, set: "run", mood: "golden", cam: s8cam, cast: s8, into: "dissolve" },
   { a: T.finds, b: T.see, set: "greenland", mood: "arctic", cam: s9cam, cast: s9, into: "dissolve" },
   { a: T.see, b: T.later, set: "greenland", mood: "dusk", cam: s10cam, cast: (f) => dinner(f, false), into: "dissolve" },
   { a: T.later, b: T.follows, set: "harbour", mood: "golden", cam: s11cam, cast: s11, into: "dissolve" },
@@ -229,5 +228,5 @@ const shots: Shot[] = [
   { a: T.all, b: TOTAL, set: "greenland", mood: "explain", cam: s14cam, cast: (f) => dinner(f, true), into: "dissolve" },
 ];
 
-export const film: Film = { total: TOTAL, sets: { hook, harbour, fog, coast1, coast2, coast3, greenland, vinland }, shots, words };
+export const film: Film = { total: TOTAL, sets: { hook, harbour, fog, coast1, coast3, run, greenland, vinland }, shots, words };
 void shipPose; void burst;

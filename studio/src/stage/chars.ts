@@ -93,6 +93,7 @@ const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => 
   if (L.glasses) for (const s of side ? [dir] : [-1, 1]) { ell(g, cx + s * dx, ey, er * 1.15, er * 1.15); g.strokeStyle = INK; g.lineWidth = 5; g.stroke(); }
   // mouth
   const mx = cx + f * R * 0.08, my = hy + R * 0.48, m = P.mouth ?? "dash", mw = R * 0.2;
+  if (L.beard) { g.beginPath(); g.moveTo(mx - mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx - mw * 2.0, my + mw * 2.6, mx, my + mw * 3.4); g.quadraticCurveTo(mx + mw * 2.0, my + mw * 2.6, mx + mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx, my + mw * 1.3, mx - mw * 2.3, my - mw * 0.6); g.closePath(); inkFill(g, L.beard, 5); }
   g.lineCap = "round";
   if (m === "dash") line(g, [[mx - mw * 0.55, my], [mx + mw * 0.55, my - 2]], 6.5);
   if (m === "smirk") line(g, [[mx - mw * 0.6, my + 3], [mx + mw * 0.2, my + 3], [mx + mw * 0.75, my - 9]], 6.5);
@@ -103,7 +104,6 @@ const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => 
   if (m === "open") { g.beginPath(); g.ellipse(mx, my - 3, mw * 0.85, mw * 0.8, 0, 0, Math.PI); g.closePath(); inkFill(g, "#5a1e28", 5.5); g.save(); g.beginPath(); g.ellipse(mx, my - 3, mw * 0.85, mw * 0.8, 0, 0, Math.PI); g.clip(); ell(g, mx, my + mw * 0.7, mw * 0.6, mw * 0.4); g.fillStyle = "#e86e78"; g.fill(); g.restore(); }
   if (m === "grin" || m === "teeth") { g.beginPath(); if (m === "grin") { g.ellipse(mx, my - 6, mw * 1.25, mw * 1.0, 0, 0, Math.PI); g.closePath(); } else g.roundRect(mx - mw * 1.1, my - mw * 0.5, mw * 2.2, mw, 8); inkFill(g, "#ffffff", 5.5); g.strokeStyle = INK; g.lineWidth = 3.5; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(mx + i * mw * 0.55, my - mw * 0.5); g.lineTo(mx + i * mw * 0.55, my + mw * 0.9); g.stroke(); } if (m === "teeth") line(g, [[mx - mw * 1.1, my], [mx + mw * 1.1, my]], 3.5); }
   if (L.moustache) { g.fillStyle = typeof L.moustache === "string" ? L.moustache : "#5a3a24"; g.strokeStyle = INK; g.lineWidth = 4; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(mx, my - mw * 0.75); g.quadraticCurveTo(mx + s * mw * 1.2, my - mw * 1.3, mx + s * mw * 1.9, my - mw * 0.2); g.quadraticCurveTo(mx + s * mw * 0.9, my - mw * 0.1, mx, my - mw * 0.3); g.closePath(); g.fill(); g.stroke(); } }
-  if (L.beard) { g.beginPath(); g.moveTo(mx - mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx - mw * 2.0, my + mw * 2.6, mx, my + mw * 3.4); g.quadraticCurveTo(mx + mw * 2.0, my + mw * 2.6, mx + mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx, my + mw * 1.3, mx - mw * 2.3, my - mw * 0.6); g.closePath(); inkFill(g, L.beard, 5); }
   if (P.sweat) { g.beginPath(); g.moveTo(hx + R * 0.82, hy - R * 0.5); g.quadraticCurveTo(hx + R * 1.0, hy - R * 0.2, hx + R * 0.82, hy - R * 0.14); g.quadraticCurveTo(hx + R * 0.66, hy - R * 0.2, hx + R * 0.82, hy - R * 0.5); inkFill(g, "#9fd4ff", 4); }
 };
 

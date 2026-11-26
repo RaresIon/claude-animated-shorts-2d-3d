@@ -59,10 +59,11 @@ export const sea = (o: { water?: string; shore?: THREE.Texture; shoreZ?: number;
     g.fillStyle = c0; g.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 40; i++) { g.fillStyle = shade(c0, 0.85 + r() * 0.3) + "88"; g.beginPath(); g.ellipse(r() * 512, r() * 512, 40 + r() * 70, 10 + r() * 16, 0, 0, 7); g.fill(); }
     g.lineCap = "round"; g.lineWidth = 5;
-    for (let i = 0; i < 46; i++) { const x = r() * 512, y = r() * 512, w = 26 + r() * 50; g.strokeStyle = i % 3 ? shade(c0, 1.45) : (o.foam ?? "#eaf7fd"); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y - 9, x + w, y); g.stroke(); }
+    for (let i = 0; i < 90; i++) { const x = r() * 512, y = r() * 512, w = 26 + r() * 50; g.strokeStyle = i % 3 ? shade(c0, 1.45) : (o.foam ?? "#eaf7fd"); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y - 9, x + w, y); g.stroke(); }
   }, [26, 26]);
   const g = group(); const plane = new THREE.Mesh(new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: water })); plane.receiveShadow = true; g.add(plane);
   if (o.shore) { const z = o.shoreZ ?? 9; const land = new THREE.Mesh(new THREE.PlaneGeometry(260, 120).rotateX(-Math.PI / 2), lit(o.shore)); land.receiveShadow = true; land.position.set(0, 0.06, -z - 60); g.add(land); g.add(put(box(260, 0.1, 1.2, "#eaf7fd", false), 0, 0.0, -z + 0.5)); }
   for (let i = 0; i < 6; i++) g.add(put(cloud(9 + (i % 3) * 3, i + 3), -60 + i * 26, 22 + (i % 3) * 5, -110));
+  for (let i = 0; i < 9; i++) g.add(put(cloud(4 + (i % 3) * 2, i + 11), -44 + i * 11, 9 + ((i * 7) % 5) * 2.2, -62 - (i % 2) * 12)); // a busy sky: low clouds too
   return { g, water };
 };
