@@ -60,23 +60,23 @@ const s1 = (f: number): CastItem[] => {
 };
 
 // ---------------------------------------------------------------- 2. THE SECRET
-const scopeSubj = { at: SCOPE, w: 1.1, h: 1.1 };
+const scopeSubj = { at: SCOPE, w: 1.1, h: 1.1 }, dressing = [{ at: [-0.15, 0.3, -0.35] as V3, w: 0.7, h: 0.6 }, { at: [1.05, 2.56, -1.68] as V3, w: 0.5, h: 0.62 }]; // the crate and the poster stay whole too
 const s2cam = (f: number): Cam => track(f, [
-  { f: T.secret, cam: fit([{ at: BOFFIN_AT, h: 1.5 }, scopeSubj], { yaw: 9, pitch: -6, fill: 0.84, cy: 0.42, roll: 0.07 }), rate: 0.002 },
-  { f: TIMES.ping, cam: fit([{ at: BOFFIN_AT, h: 1.5 }, scopeSubj], { yaw: -5, pitch: -9, fill: 0.9, cy: 0.42, roll: -0.05 }), dur: 9 },
+  { f: T.secret, cam: fit([{ at: BOFFIN_AT, h: 1.5 }, scopeSubj, ...dressing], { yaw: 9, pitch: -6, fill: 0.92, cy: 0.46, roll: 0.07 }), rate: 0.001 },
+  { f: TIMES.ping, cam: fit([{ at: BOFFIN_AT, h: 1.5 }, scopeSubj, ...dressing], { yaw: -5, pitch: -9, fill: 0.94, cy: 0.46, roll: -0.05 }), dur: 9 },
 ]);
 const s2 = (f: number): CastItem[] => {
   const on = f >= TIMES.ping;
   return [
     person("boffin", BOFFIN, BOFFIN_AT, on ? { eyes: "happy", mouth: "grin", face: -0.5, lh: [-0.85, -1.25], rh: [0.4, 0.9], held: "paper", squash: pop(f, TIMES.ping) }
-      : { eyes: "side", look: [-0.8, 0], mouth: "o", brow: -0.6, face: -0.3, rh: [0.7, -0.95], lh: [-0.35, 0.9], heldL: "paper", squash: antic(f, TIMES.ping), tilt: bob(f) }, f, 8, 1.5),
+      : { eyes: "side", look: [-0.8, 0], mouth: "o", brow: -0.6, face: -0.3, rh: [0.7, -0.95], lh: [-0.95, -0.35], heldL: "paper", squash: antic(f, TIMES.ping), tilt: bob(f) }, f, 8, 1.5),
     fx("ping", TEX.ping(), [SCOPE[0], SCOPE[1], SCOPE[2] + 0.12], 1.0 * grow(f, TIMES.ping), 1.0 * grow(f, TIMES.ping), on ? 1 : 0, (f - TIMES.ping) * 0.05),
   ];
 };
 
 // ---------------------------------------------------------------- 3. THE MINISTRY
 const TELLS = F("tells", 0, -2), ALL = F("everyone", 0, -2);
-const official = { at: OFFICIAL_AT, h: 1.5 };
+const official = { at: OFFICIAL_AT, h: 1.5, arms: true }; // he waves a paper: keep his arms in frame
 const s3cam = (f: number): Cam => track(f, [
   { f: T.gov, cam: fit([official, EASEL, MIN_SIGN], { yaw: 6, pitch: -5, fill: 0.9, cy: 0.44, roll: -0.06 }), rate: 0.0012 },
   { f: TIMES.reveal, cam: fit([official, EASEL], { yaw: -9, pitch: -10, fill: 0.88, cy: 0.44, roll: 0.07 }), dur: 9 },

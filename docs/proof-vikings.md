@@ -18,6 +18,23 @@ a camera that never stops, low, high and tilted angles, a hook that opens mid-ac
 | `frame_qa.py` | pass: empty share median 0.21 (reference 0.20), p90 0.31, sharpness 184, 3 moods |
 | `audio_qa.py` | pass: -14.0 LUFS, peak -1.5 dB, bed 11.3 dB under the voice, 3.59 words/s, 0.40 s after the last word |
 
+## Render 4: every camera from `fit()`
+
+The fourth render replaces every hand-typed camera with the auto-framing helper and was rendered locally on CPU
+(about 50 minutes). Before the reframe the film had 15 failures on the first set of lint checks and 28 on the
+second set (flicker, lettering, held items, camera jumps). The invisible "3, 2, 1" countdown is on screen now.
+
+| Gate | Result |
+|---|---|
+| `plan_lint.ts` | pass, 0 waivers (6 warnings; 14 with sound cues) |
+| `frame_qa.py --plan` | pass: empty share median 0.19, p90 0.34, sharpness 198, 3 moods |
+| `audio_qa.py` | pass: -14.0 LUFS, peak -2.0 dB, bed 11.4 dB under the voice, 3.59 words/s |
+
+Not re-scored by a reviewer. Known leftovers: the caption sits over the crew's chests in the wide ship shots, the
+two "coasts" frames at 27 to 28 s have no character in them, and the list below still applies.
+
+![frames](img/proof-vikings-v4-sheet.jpg)
+
 ## Reviews
 
 An independent reviewer agent scored each render against the reference (out of 10).

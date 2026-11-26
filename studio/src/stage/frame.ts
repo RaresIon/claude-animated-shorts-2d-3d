@@ -28,14 +28,19 @@ export const aim = (cam: THREE.PerspectiveCamera, c: Cam, aspect = ASPECT, yaw =
 };
 
 // ---------------------------------------------------------------- where things are on screen
-type Item = { kind: string; at: V3; h?: number; w?: number; s?: number; roll?: number; flat?: boolean };
+type Item = { kind: string; at: V3; h?: number; w?: number; s?: number; roll?: number; flat?: boolean; flip?: boolean; look?: { stout?: boolean }; pose?: { lh?: [number, number]; rh?: [number, number]; held?: string | null; heldL?: string | null } };
 export type Quad = THREE.Vector3[]; // four world corners: bottom-left, bottom-right, top-right, top-left
 const quadAt = (c: THREE.Vector3, right: THREE.Vector3, up: THREE.Vector3, w: number, y0: number, y1: number): Quad =>
   [[-1, y0], [1, y0], [1, y1], [-1, y1]].map(([sx, y]) => c.clone().addScaledVector(right, (sx * w) / 2).addScaledVector(up, y));
 /** the drawn figure of a person, not its (larger, mostly empty) canvas: whole body, and head with hat */
 export const personQuads = (it: Item, face: THREE.Quaternion) => {
   const h = it.h ?? 1.7, c = new THREE.Vector3(...it.at), right = new THREE.Vector3(1, 0, 0).applyQuaternion(face), up = new THREE.Vector3(0, 1, 0).applyQuaternion(face);
-  return { body: quadAt(c, right, up, 0.36 * h, 0, 0.94 * h), head: quadAt(c, right, up, 0.34 * h, 0.57 * h, 0.93 * h), torso: quadAt(c, right, up, 0.28 * h, 0.3 * h, 0.57 * h), face: c.clone().addScaledVector(up, 0.73 * h) };
+  // hands, from the same numbers chars.ts draws with: shoulders at 340 px, a hand `pose.rh` head-radii (92 px) from
+  // its shoulder, soles at 620 px, 580 px = the person's height
+  const tw = it.look?.stout ? 86 : 68, fl = it.flip ? -1 : 1;
+  const hands = ([[it.pose?.lh ?? [-0.35, 1.25], -1, it.pose?.heldL], [it.pose?.rh ?? [0.35, 1.25], 1, it.pose?.held]] as [[number, number], number, string | null | undefined][]).map(([hp, s, held]) =>
+    ({ p: c.clone().addScaledVector(right, (fl * (s * tw * 0.82 + hp[0] * 92) * h) / 580).addScaledVector(up, ((620 - (340 + hp[1] * 92)) * h) / 580), held: held ?? null, raised: hp[1] < 0 }));
+  return { hands, body: quadAt(c, right, up, 0.36 * h, 0, 0.94 * h), head: quadAt(c, right, up, 0.34 * h, 0.57 * h, 0.93 * h), torso: quadAt(c, right, up, 0.28 * h, 0.3 * h, 0.57 * h), face: c.clone().addScaledVector(up, 0.73 * h) };
 };
 /** the rectangle of a cast card or a rat */
 export const cardQuad = (it: Item, face: THREE.Quaternion): Quad => {
@@ -72,7 +77,8 @@ export const onScreen = (q: Quad, cam: THREE.PerspectiveCamera): Screen => {
 export const cover = (a: number[], b: number[]) => { const w = Math.min(a[2], b[2]) - Math.max(a[0], b[0]), h = Math.min(a[3], b[3]) - Math.max(a[1], b[1]); return w > 0 && h > 0 ? (w * h) / Math.max(1e-9, (a[2] - a[0]) * (a[3] - a[1])) : 0; };
 
 // ---------------------------------------------------------------- auto-framing
-export type Subject = V3 | { at: V3; h?: number; w?: number; kind?: string };
+/** `arms: true` on a person makes room for outstretched arms and what they hold (about one body height wide) */
+export type Subject = V3 | { at: V3; h?: number; w?: number; kind?: string; arms?: boolean };
 export type FitOpts = {
   /** where the camera stands, in degrees round the subjects: 0 = straight in front (+z), 90 = from +x, -90 = from -x */
   yaw?: number;
@@ -94,7 +100,7 @@ export const fit = (subjects: Subject[], o: FitOpts = {}): Cam => {
   const pts: THREE.Vector3[] = [];
   for (const s of subjects) {
     if (Array.isArray(s)) { pts.push(new THREE.Vector3(...s)); continue; }
-    const h = s.h ?? 1.7, w = s.w ?? 0.4 * h, person = s.w === undefined, y0 = person ? 0 : -h / 2, y1 = person ? 0.96 * h : h / 2;
+    const h = s.h ?? 1.7, w = s.w ?? (s.arms ? 1.0 : 0.4) * h, person = s.w === undefined, y0 = person ? 0 : -h / 2, y1 = person ? 0.96 * h : h / 2;
     for (const dx of [-w / 2, w / 2]) for (const y of [y0, y1]) pts.push(new THREE.Vector3(s.at[0] + dx, s.at[1] + y, s.at[2]), new THREE.Vector3(s.at[0], s.at[1] + y, s.at[2] + dx));
   }
   if (!pts.length) throw new Error("fit(): nothing to frame");

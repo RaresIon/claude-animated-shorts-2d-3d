@@ -35,11 +35,11 @@ export const ctex = (key: string, w: number, h: number, draw: (g: G, r: () => nu
   const k = key + (repeat ? `@${repeat[0]}x${repeat[1]}` : "");
   let t = texCache.get(k);
   if (t) return t;
-  if (typeof document === "undefined") return new THREE.Texture() as THREE.CanvasTexture; // node (plan_lint): no pixels needed
+  if (typeof document === "undefined") { const n = new THREE.Texture() as THREE.CanvasTexture; n.name = k; return n; } // node (plan_lint): no pixels needed, but the name tells two paints apart
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const g = c.getContext("2d")!;
   draw(g, rng(key.split("").reduce((a, ch) => a + ch.charCodeAt(0), 7)));
-  t = new THREE.CanvasTexture(c);
+  t = new THREE.CanvasTexture(c); t.name = k;
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
   texCache.set(k, t);

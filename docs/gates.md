@@ -25,10 +25,15 @@ when it lasts 10 frames, or at all in the last half second.
 | Headless | a body is in frame and its head is not. |
 | Face hidden | the middle of a face sits behind a nearer character's head or torso, or a ray from the lens to it hits the set. |
 | Face under caption | a head overlaps the caption box by 30 % or more while a caption is up. |
-| Card cut | an effect card or creature covering 3 % of the frame is cut by the edge. |
-| Sign legibility | a sign that ever covers 2 % of the frame must be readable for 0.3 s + 0.22 s per word (0.5 to 2 s): largest line 26 px high or more (of 1920), whole, not behind the cast or the set, not under the caption. |
+| Held item, raised hand | what a hand holds is outside the frame (8 % margin) or under the caption; a raised hand is outside the frame. |
+| Card cut | an effect card or creature is cut by the edge: from 0.3 % of the frame when there are six or fewer, from 3 % in a swarm. |
+| Hero prop | a prop marked with `props.hero(obj, "name")` is cut by the edge or under the caption while it covers 1 % of the frame. |
+| Sign legibility | every lettered card counts, on walls, crates and shop fronts alike. A sign that ever covers 2 % of the frame must be readable for 0.3 s + 0.22 s per word (0.5 to 2 s; 0.35 s for a single digit or mark): largest line 26 px high or more (of 1920), whole, not behind the cast or the set, not under the caption. |
 | Lens | 4 of 144 rays from the lens hit something upright within 0.8 m. |
 | Ground | the camera is under 8 cm high. |
+| Flicker | two solid flat faces of different paint lie in one plane (within 1.5 mm), face the same way, share 200 cm2 or more and are not pressed against something. Checked once per set on boxes and planes. Cards cannot flicker: `props.card()` carries a polygon offset. |
+| Camera jump | inside a shot the camera changes framing in a single frame. |
+| Teleport | a character moves more than 0.6 m in one frame (a warning when a camera burst hides it). |
 | Beats | a sentence of 0.8 s or more has no pose change, card, camera burst or new shot. |
 | Impacts | a camera shake has no cue in `cues.json` within 3 frames (card pops: warning). |
 | Ending | the biggest character in the last frame is under 25 % of the frame height. |
@@ -56,7 +61,8 @@ Waivers are written in the film and printed by the lint: `crop: true` on a cast 
 
 ## What the gates cannot see
 
-Whether a joke lands, whether a pose reads, lettering painted straight onto a prop, originality. The stills sheet and
+Whether a joke lands, whether a pose reads, whether a sentence's key noun is pictured, a prop popping in mid-shot,
+a large blank surface holding the frame, originality. The stills sheet and
 an independent reviewer are still required (`docs/style-rules.md`).
 
 ## Tests of the tooling itself
@@ -70,6 +76,6 @@ an independent reviewer are still required (`docs/style-rules.md`).
 
 - `carrots` (10 s) was made with these gates and passes all of them. How it compares with the same film made
   without them: `docs/experiment-gates.md`.
-- `vikings` and `rat-tails` were made before `plan_lint` checked edges, occlusion and legibility. It now reports
-  15 and 40 failures in them; they are left as they were delivered, as a record. Fix them with `fit()` before
-  using either as a pattern for framing.
+- `vikings` (47 s) was reframed with `fit()` after these checks existed and passes all of them with no waivers.
+- `rat-tails` was made before `plan_lint` checked edges, occlusion and legibility, and still fails it (about 50
+  failures). It is left as delivered, as a record: do not use it as a pattern for framing.

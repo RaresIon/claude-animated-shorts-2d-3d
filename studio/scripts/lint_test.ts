@@ -12,6 +12,9 @@ const EXPECT: [string, RegExp][] = [
   ["a face behind a prop", /shot 4[^]*?FAIL: .*ann's face is behind a prop/],
   ["a shot where nothing changes", /shot 4[^]*?FAIL: nothing changes in this shot/],
   ["a sentence with no change on screen", /FAIL: f\d+-\d+: nothing changes on screen during/],
+  ["two surfaces in one plane (flicker)", /FAIL: set "yard": two surfaces lie in the same plane/],
+  ["a camera that jumps in one frame", /FAIL: f4[01]: the camera jumps to a new framing in one frame/],
+  ["a hero prop cut by the edge", /FAIL: .*the prize \(a hero prop\) is cut by the/],
   ["a weak last frame", /FAIL: the last frame: the biggest character is only/],
 ];
 let bad = 0;
