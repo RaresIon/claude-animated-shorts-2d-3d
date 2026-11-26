@@ -9,7 +9,7 @@ difference between the reference and our earlier shorts (`docs/style-gap-analysi
 - [ ] The top third, middle third and bottom third each hold something with a name.
 - [ ] The main character fills at least a third of the frame height in every story shot.
 - [ ] Nobody and no sign is cut in half by the frame edge unless it is a deliberate foreground.
-- [ ] No face, hand prop or sign sits under the caption (caption centre at 66 % of the height).
+- [ ] No face, hand prop or sign sits under the caption (caption centre at 70 % of the height).
 - [ ] The subject is sharp in every frame.
 
 ## Light and colour
@@ -30,14 +30,18 @@ difference between the reference and our earlier shorts (`docs/style-gap-analysi
 - [ ] Blinks happen; nobody stares for a whole shot.
 
 ## Camera and edit
-- [ ] The camera mostly holds with a slow push. Moves are short bursts.
-- [ ] Place changes use a whip, dip or flash. Plain hard cuts are rare.
-- [ ] 10-14 shots per 45 s. No shot under 1.2 s unless it is a punchline insert.
-- [ ] The first frame already shows the main character, big, doing the thing the hook says.
+- [ ] No hard cuts. New places dissolve in; new framings in the same place are one camera move.
+- [ ] The camera never sits dead still, and moves in short ease-out bursts.
+- [ ] Low, eye-level and high angles all appear; about a quarter of framings are tilted.
+- [ ] At least one insert (prop, hand or face filling the frame) and one far wide.
+- [ ] Most shots have something in the foreground.
+- [ ] 12-15 set-ups per minute. No shot under 0.8 s unless it is a punchline insert.
+- [ ] In frame 0 the hook's action is already happening and the camera is moving.
+- [ ] One to three in-character spoken lines, each with a mouth flap; no mouth moves under narration.
 - [ ] The video ends on the last word, on the strongest picture.
 
 ## Captions and sound
-- [ ] Captions are on, one to three words, in sync with the voice, never more than one line.
+- [ ] Captions are on, one or two words, at 70 % of the height, in sync with the voice, no pop.
 - [ ] The voice is clear over the music everywhere; -14 LUFS overall.
 - [ ] Every visible impact, pop and coin has a sound on the same frame.
 - [ ] Effects are CC0 or made by us, and `audio/sfx/CREDITS.md` lists them.

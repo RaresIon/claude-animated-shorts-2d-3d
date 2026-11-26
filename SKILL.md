@@ -18,11 +18,12 @@ engine, props, characters, light, camera, captions and QA are shared and live in
 The reference frames in `references/` are private study material: never publish them, never copy their scripts,
 characters, jokes, logos or audio. Learn the craft, make your own story.
 
-## The seven rules that make the look
+## The ten rules that make the look
 
-These are gates, not advice. Two scripts check them without anyone's judgment: `scripts/plan_lint.ts` (before
-rendering: cast size, faces under captions, dead shots, cuts, moods) and `scripts/frame_qa.py` (after: empty frame
-share, sharpness, palette, moods).
+These are gates, not advice. Three scripts check them without anyone's judgment: `scripts/plan_lint.ts` (before
+rendering: cast size, faces under captions, dead shots, cuts, angles, inserts, hook, captions, pace),
+`scripts/frame_qa.py` (after: empty frame share, sharpness, palette, moods) and `scripts/audio_qa.py` (loudness,
+music level under the voice, pauses, ending on the last word).
 
 1. **Fill the frame.** A 9:16 frame is only about 2.8 m wide when it shows 5 m of height, so stack the set
    vertically: lamp and pictures above, cast in the middle, named props on the floor in front. A set is not done until
@@ -38,11 +39,21 @@ share, sharpness, palette, moods).
 6. **Act on the word.** Every sentence gets one clear pose change, landing 0-3 frames before its word: a prop goes
    up, a face changes, something pops in. Use `pop()` (squash and settle over 7 frames) and `antic()` (a dip just
    before). Something is in a hand in most shots. Characters never just stand with arms down.
-7. **Hold and burst.** The camera holds about 80 % of the time with a slow push (`track()`), and moves in ease-out
-   bursts of 8-14 frames. Enter a new place with a whip, a dip or a flash (`into:`), not a plain cut. Aim for 10-14
-   shots in 45 s.
+7. **One continuous take.** No hard cuts, ever. A new place or time dissolves in (`into: "dissolve"`, 8 frames);
+   a new framing in the same place is one camera burst (`into: "move"`). The camera never stops (drift is built in)
+   and moves in ease-out bursts (`track()`). Aim for 12-15 set-ups per minute.
+8. **Vary the angle and the size.** Use low, eye-level and high angles in every film, tilt a quarter of the framings
+   3-10 degrees (`roll`), and include at least one insert (a prop, a hand, a face filling the frame; `tag: "insert"`)
+   and one far wide for scale (`tag: "wide"`). Put something in the foreground: a shoulder, a post, a bush.
+9. **Open mid-action.** In frame 0 the thing the hook describes is already happening and the camera is already
+   moving. Never open on characters standing.
+10. **Let characters speak once or twice.** One to three short in-character lines per film, voiced by the narrator.
+   Only those lines get a mouth flap (`talk()`); narration never does.
 
-Captions are **on** by default: one to three words, bold white with a black outline, hard swaps. Turn them off
+Rules 7-10 and the caption format were measured on three full reference videos: `docs/reference-motion.md`.
+
+Captions are **on** by default: one or two words, bold white with a black outline, at 70 % of the height, hard
+swaps with no pop. Turn them off
 (`captions: false` on the film) only when the user asks.
 
 ## Pipeline
@@ -68,18 +79,23 @@ Captions are **on** by default: one to three words, bold white with a black outl
    texture from `stage/paint.ts`. Aim for 20-30 placed props per set. Things that change over time go in the set's
    `tick(f)`.
 6. **Shots** (`film.ts`). Per shot: `a`, `b` (frames), `set`, `mood`, `cam` (a `track()` of framings), `cast`
-   (people, rats or other creatures, effect cards, each a function of the frame) and `into`. Time every beat to
-   `words.json`.
+   (people, rats or other creatures, effect cards, each a function of the frame), `into` and an optional `tag`.
+   Pin every beat to a spoken word with a helper like `F("word", nth)` (see the example). If the voice is
+   re-recorded later, do not renumber the shots: give the film a `warp` (old anchor frames → the new frames of the
+   same words) and every beat, and every sound cue, follows.
 7. **Lint the plan (no rendering).** `npx tsx scripts/plan_lint.ts <film>` projects every character through
    every shot's camera and fails on: a cast smaller than 30 % of the frame height, a face under the caption, a shot
-   where nothing changes, too many plain cuts, fewer than three moods. It takes two seconds: run it after every edit.
+   where nothing changes, any plain cut, fewer than three moods, fewer than three camera angles, too few tilted
+   framings, no insert or no wide, a static hook, captions longer than two words, narration outside 3.3-4.1 words
+   per second. It takes two seconds: run it after every edit.
 8. **Stills, every shot.** `node scripts/stills.mjs <Comp> out/s_ <frames> 0.5`: one frame per beat (about 5 s
    each on CPU). Make a contact sheet and **look at it**. Fix framing: nobody cut by the frame edge, no prop hiding a
    face or a sign, nothing important under the caption.
 9. **Sound** (`audio/`). `python3 audio/fetch_sfx.py` pulls CC0 effects from Freesound (credits file written
    automatically); `python3 audio/make.py` builds the score, places each effect on its picture frame and mixes:
    voice unchanged, music about 11 LU under it and ducked on speech, effects placed relative to the voice,
-   -14 LUFS, true peak under -1 dB. Lock picture timing before this step.
+   -14 LUFS, true peak under -1 dB. Cue frames are mapped through `audio/warp.json`, which `plan_lint` writes.
+   Check it with `python3 scripts/audio_qa.py audio/mix.wav src/videos/<film>/words.json`.
 10. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/mix.wav` (resumable chunks; about 3 s per
    frame at 1080x1920 on four CPU cores, far faster with `GL=angle-egl` on a GPU), or on Modal in parallel
    chunks. See `docs/rendering.md`.
@@ -92,13 +108,13 @@ Captions are **on** by default: one to three words, bold white with a black outl
 
 | File | What it gives you |
 |---|---|
-| `Stage.tsx` | the engine: `Film`, `Shot`, `CastItem`; one scene, sets swapped per shot, mood lights, 2D cast as camera-facing cards with contact shadows, whip/dip/flash transitions, vignette, captions |
+| `Stage.tsx` | the engine: `Film`, `Shot`, `CastItem`; sets swapped per shot, mood lights, shadow-mapped key light, 2D cast as lens-facing cards with contact shadows, cross-dissolves and camera travel between shots, time `warp`, vignette, captions |
 | `props.ts` | `inked()` (inverted-hull outline, constant width on screen), `box/cyl/ball/card`, `lightPool`, `contact`, and the prop library; `dress()` to place many at once |
 | `sets.ts` | `room`, `street`, `tunnel`, `field` |
 | `paint.ts` | painted surfaces (planks, plaster with exposed brick, bricks, cobbles, tiles, dirt, grass, stone) and `sign()` for lettering |
-| `chars.ts` | `drawPerson(look, pose)`: 8 hats, held props, 8 eye types, 9 mouths, brows, walk cycle, squash, lean; `drawRat`; `blinkAt` |
+| `chars.ts` | `drawPerson(look, pose)`: 8 hats, held props, 8 eye types, 9 mouths, brows, curved limbs, walk cycle, side view, squash, lean; `talk` (mouth flap for a spoken line); `drawRat`; `blinkAt` |
 | `moods.ts` | the seven light moods: sky, ambient, key, fog, cast tint, grade, vignette |
-| `camera.ts` | `track` (hold + burst), `push`, `shake`, `whip` |
+| `camera.ts` | `track` (hold + burst), `push`, `drift` (always on), `shake` |
 | `Captions.tsx` | word-by-word captions from `words.json` |
 | `util.ts` | easing (`burst`, `overshoot`, `bump`), seeded random, colours, cached canvas textures |
 
