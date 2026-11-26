@@ -1,0 +1,110 @@
+# Cue sheet (frame @30 fps, time, what)
+
+-    0    0.00 s  room tone (bed)
+-   22    0.73 s  rat lands on the desk
+-   31    1.03 s  coin handed over
+-   40    1.33 s  desk bell
+-  112    3.73 s  pull back
+-  114    3.80 s  claws on wood (bed)
+-  114    3.80 s  official gasps
+-  114    3.80 s  rats everywhere (bed)
+-  116    3.87 s  squeak
+-  121    4.03 s  squeak
+-  126    4.20 s  squeak
+-  131    4.37 s  squeak
+-  136    4.53 s  squeak
+-  141    4.70 s  squeak
+-  169    5.63 s  street birds (bed)
+-  224    7.47 s  ribbon cut
+-  228    7.60 s  applause (bed)
+-  228    7.60 s  cheer
+-  266    8.87 s  down the manhole
+-  268    8.93 s  sewer drips (bed)
+-  272    9.07 s  rat chatter (bed)
+-  272    9.07 s  rat traffic (bed)
+-  290    9.67 s  passing squeak
+-  318   10.60 s  passing squeak
+-  346   11.53 s  passing squeak
+-  372   12.40 s  passing squeak
+-  383   12.77 s  whip
+-  411   13.70 s  net swing
+-  418   13.93 s  caught
+-  452   15.07 s  tally board
+-  497   16.57 s  rats rush
+-  497   16.57 s  squeaks (bed)
+-  497   16.57 s  stampede over the catcher (bed)
+-  499   16.63 s  rat on head
+-  520   17.33 s  dip
+-  522   17.40 s  street birds (bed)
+-  524   17.47 s  poster
+-  548   18.27 s  idea!
+-  566   18.87 s  tail up
+-  596   19.87 s  one cent
+-  598   19.93 s  ka-ching
+-  619   20.63 s  whip
+-  627   20.90 s  tails on the pile
+-  631   21.03 s  paid
+-  637   21.23 s  stamp
+-  649   21.63 s  tails on the pile
+-  653   21.77 s  paid
+-  659   21.97 s  stamp
+-  671   22.37 s  tails on the pile
+-  675   22.50 s  paid
+-  681   22.70 s  stamp
+-  690   23.00 s  thrilled
+-  693   23.10 s  tails on the pile
+-  697   23.23 s  paid
+-  703   23.43 s  stamp
+-  714   23.80 s  whip
+-  716   23.87 s  evening birds (bed)
+-  716   23.87 s  official strolls (bed)
+-  762   25.40 s  ?
+-  783   26.10 s  camera drops
+-  786   26.20 s  gasp
+-  790   26.33 s  smug squeak
+-  800   26.67 s  smug squeak
+-  812   27.07 s  smug squeak
+-  822   27.40 s  smug squeak
+-  828   27.60 s  dip
+-  866   28.87 s  = one cent
+-  866   28.87 s  pop
+-  894   29.80 s  little feet (bed)
+-  939   31.30 s  door
+-  941   31.37 s  hearts
+-  946   31.53 s  a baby rat
+-  950   31.67 s  a baby rat
+-  954   31.81 s  a baby rat
+-  958   31.95 s  a baby rat
+-  962   32.09 s  a baby rat
+-  967   32.23 s  a baby rat
+-  971   32.37 s  a baby rat
+-  975   32.51 s  a baby rat
+-  977   32.57 s  tail = coin
+-  979   32.65 s  a baby rat
+-  981   32.70 s  tail = coin
+-  983   32.79 s  a baby rat
+-  985   32.83 s  tail = coin
+-  988   32.93 s  a baby rat
+-  989   32.97 s  tail = coin
+-  993   33.10 s  tail = coin
+- 1013   33.77 s  evening crickets (bed)
+- 1022   34.07 s  bush rustle
+- 1088   36.27 s  over the fence
+- 1090   36.33 s  hundreds of rats (bed)
+- 1090   36.33 s  pen (bed)
+- 1092   36.40 s  inspector gasps
+- 1160   38.67 s  tails
+- 1164   38.80 s  coin
+- 1191   39.70 s  whip
+- 1206   40.20 s  stamp swings
+- 1212   40.40 s  CANCELLED
+- 1212   40.40 s  stamp hits
+- 1239   41.30 s  whip
+- 1241   41.37 s  dusk (bed)
+- 1241   41.37 s  the street belongs to the rats (bed)
+- 1279   42.63 s  pull back
+- 1281   42.70 s  rats (bed)
+- 1290   43.00 s  rat on the hat
+- 1295   43.17 s  rat on the hat
+- 1300   43.33 s  rat on the hat
+- 1322   44.07 s  last word: a squeak
