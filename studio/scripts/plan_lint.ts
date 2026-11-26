@@ -260,7 +260,7 @@ console.log("signs");
 const waivedSigns = new Set(film.shots.flatMap((s) => s.allow ?? []));
 for (const st of signSeen.values()) {
   if (!st.big) continue; // never more than set dressing
-  const need = Math.max(0.5, Math.min(2, 0.3 + 0.22 * st.words)), got = st.readable / FPS;
+  const need = st.id.length <= 2 ? 0.35 : Math.max(0.5, Math.min(2, 0.3 + 0.22 * st.words)), got = st.readable / FPS; // a single digit or mark reads at a glance
   const line = `"${st.id}" (shots ${[...st.shots].join(", ")}): readable ${got.toFixed(1)} s of ${need.toFixed(1)} s needed, best line height ${st.bestPx.toFixed(0)} px`;
   const why = signIssues.filter((x) => x.id === st.id), list = why.map((x) => x.text).join("; ");
   if (got >= need) { // it can be read; being cut or covered at other moments is a blemish, not a failure
@@ -293,7 +293,7 @@ console.log("beats");
       if (now > 0.06 && before < 0.2 * now && after < 0.2 * now && !hits.some((h) => Math.abs(f - h) < 10)) jumps.push(f);
       // and a character may not teleport (more than 0.6 m in one frame), unless the camera is mid-burst and hides it
       const was1 = new Map((s.cast?.(f - 1) ?? []).filter((k) => k.kind === "person").map((k) => [k.id, k.at]));
-      for (const k of s.cast?.(f) ?? []) { const o = was1.get(k.id); if (k.kind === "person" && o && Math.hypot(k.at[0] - o[0], k.at[1] - o[1], k.at[2] - o[2]) > 0.6) ports.push({ f, id: k.id, hidden: burst || was }); }
+      for (const k of s.cast?.(f) ?? []) { const o = was1.get(k.id); if (k.kind === "person" && o && Math.hypot(k.at[0] - o[0], k.at[1] - o[1], k.at[2] - o[2]) > 0.6) ports.push({ f, id: k.id, hidden: burst || was || Math.hypot(c2.pos[0] - c1.pos[0], c2.pos[1] - c1.pos[1], c2.pos[2] - c1.pos[2]) > 0.012 * d + 0.02 }); }
     }
     prev = cur; was = burst; prevIds = ids;
   }

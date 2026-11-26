@@ -9,8 +9,8 @@ Everything runs from `studio/`. A film is **two files**: its sets (`sets.ts`) an
 engine, props, characters, light, camera, captions and QA are shared and live in `studio/src/stage/` and
 `studio/scripts/`.
 
-- Worked examples: `studio/src/videos/carrots/` (10 s, passes every gate: the pattern to copy for framing with `fit()`), `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
-  copy) and `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s: shows a re-voiced film carried by `warp`).
+- Worked examples: `studio/src/videos/carrots/` (10 s, passes every gate: the pattern to copy for framing with `fit()`), `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, every camera from `fit()`: the
+  pattern to copy) and `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s: shows a re-voiced film carried by `warp`).
 - Why the kit looks the way it does: `docs/style-gap-analysis.md`. The rules in short: `docs/style-rules.md`.
 - Rendering on CPU, GPU and Modal: `docs/rendering.md`.
 - The older bridge pipeline (post-processing look, GPU only) is kept in `templates/bridge/` and
@@ -26,9 +26,10 @@ and stops at the first failure: `python3 scripts/make_short.py <film>` (see `doc
 threshold).
 
 - `scripts/transcript_check.py`: the voice said the script; mis-heard spellings are repaired.
-- `scripts/plan_lint.ts` (before rendering, 2 s): heads, cards and signs cut by the frame edge; a face behind another
-  character or a prop; a sign behind the cast or under the caption; something right in front of the lens; lettering
-  that can never be read; a sentence with nothing changing on screen; impacts without a sound; a weak last frame;
+- `scripts/plan_lint.ts` (before rendering, 2 s): heads, cards, signs, held items and hero props cut by the frame
+  edge; a face behind another character or a prop; a sign, a held item or a hero prop under the caption; something
+  right in front of the lens; surfaces that will flicker; a camera that jumps in one frame; lettering that can never
+  be read; a sentence with nothing changing on screen; impacts without a sound; a weak last frame;
   plus cast size, cuts, angles, inserts, hook, captions and pace.
 - `scripts/frame_qa.py` (after): empty frame share, sharpness, palette, moods, contrast, flat or grey shots, the
   last frame.
@@ -38,7 +39,8 @@ threshold).
 holds every subject whole inside the 9:16 frame: `cam: (f) => fit(cast(f), { yaw: 20, pitch: 8 })`. Typing camera
 positions by hand is what cut people and signs in half in both proof films. A deliberate exception is declared, not
 hidden: `crop: true` on a cast item that is meant to be cut (a foreground shoulder), `allow: ["FOR SALE", "lens"]`
-on a shot.
+on a shot. Mark the props the story is about with `P.hero(obj, "name")` so the lint guards them too, and pass
+`arms: true` for a subject who gestures, so `fit()` leaves room for the arms.
 
 1. **Fill the frame.** A 9:16 frame is only about 2.8 m wide when it shows 5 m of height, so stack the set
    vertically: lamp and pictures above, cast in the middle, named props on the floor in front. A set is not done until
@@ -159,7 +161,12 @@ To add a creature or a new kind of character, add a `draw…` function in `chars
   `2 * dist * tan(fov/2) * 9/16`.
 - A row of people (a ship's crew, a queue) is wider than a vertical frame from the side. Shoot along the row, from
   the bow or the stern, so they stack in depth; keep side views for one or two people.
-- `plan_lint` knows the cast, effect cards and signs made with `framed()` or `poster()`. It does not know lettering
-  you paint straight onto a prop, or how a pose reads: the stills are still yours to look at.
+- `plan_lint` knows the cast, effect cards, every lettered `card()` and props marked `hero()`. It does not know
+  how a pose reads or whether the picture tells the beat: the stills are still yours to look at.
+- A caption sits at 70 % of the height, which is chest height on a figure that fills half the frame from the bottom.
+  Hold props above the shoulder (`rh: [x, -0.5]` or higher) or frame the group higher (`cy` under 0.45).
+- `fit()` keys have no spare margin: give them `rate: 0` in `track()`, or the slow push-in will creep past the edge.
+- A row of people overlaps itself from the quarter. Keep group shots within 25 degrees of side-on and use `pitch`
+  for variety; go round to the bow or stern only for one or two people.
 - Flags, uniforms and signs are period details: check them (the bridge short's first flag read as the wrong country).
 - Every Remotion bundle copies `public/` into the temp folder. Keep `public/` small (fonts only) and it stays a non-issue.
