@@ -20,12 +20,15 @@ export type Pose = {
   lean?: number; squash?: number;                    // lean in radians; squash: 1 = rest, <1 squashed, >1 stretched
   walk?: number;                                     // walk-cycle phase (radians); undefined = standing
   blink?: boolean; sweat?: boolean; tilt?: number;   // head tilt in radians
+  view?: "front" | "side";                           // side: profile, one eye, facing the sign of `face`
 };
 
 export const PW = 440, PH = 640; // person canvas (design px); soles at y = 620
 export const SKIN = "#fbf5ea";
 const ell = (g: G, x: number, y: number, rx: number, ry: number, rot = 0) => { g.beginPath(); g.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot, 0, Math.PI * 2); };
 const line = (g: G, pts: number[][], w: number, c = INK) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke(); };
+/** a limb: one curved "noodle" stroke through a control point (the reference bends limbs as curves, not joints) */
+const noodle = (g: G, a: number[], c: number[], b: number[], w: number, col = INK) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = "round"; g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(c[0] * 2 - (a[0] + b[0]) / 2, c[1] * 2 - (a[1] + b[1]) / 2, b[0], b[1]); g.stroke(); };
 const inkFill = (g: G, fill: string, w = 9) => { g.fillStyle = fill; g.fill(); g.strokeStyle = INK; g.lineWidth = w; g.lineJoin = "round"; g.stroke(); };
 /** soft crescent form shadow inside the current path */
 const crescent = (g: G, path: () => void, x: number, y: number, rx: number, ry: number, a = 0.16) => {
@@ -63,9 +66,11 @@ const drawHat = (g: G, L: Look, hx: number, hy: number, R: number, f: number) =>
 };
 
 const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => {
-  const f = P.face ?? 0, cx = hx + f * R * 0.24, ey = hy + R * 0.02, dx = R * 0.25, er = R * 0.2;
+  const side = P.view === "side", dir = (P.face ?? 1) >= 0 ? 1 : -1;
+  const f = side ? dir * 1.7 : P.face ?? 0, cx = hx + f * R * 0.24, ey = hy + R * 0.02, dx = R * 0.25, er = R * 0.2;
   const eyes: Eyes = P.blink ? "squeeze" : P.eyes ?? "lid", [lx, ly] = P.look ?? [f * 0.5, 0], brow = P.brow ?? 0;
   for (const s of [-1, 1]) {
+    if (side && s !== dir) continue; // profile: only the near eye
     const x = cx + s * dx;
     if (eyes === "lid" || eyes === "wide" || eyes === "angry" || eyes === "side") {
       ell(g, x, ey, er, eyes === "wide" ? er * 1.18 : er); g.fillStyle = "#ffffff"; g.fill(); g.strokeStyle = INK; g.lineWidth = 5.5; g.stroke();
@@ -79,8 +84,8 @@ const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => 
     const by = ey - er * (1.5 - Math.min(0, brow) * 0.5) + (eyes === "wide" ? -er * 0.2 : 0);
     line(g, [[x - s * er * 0.85, by - brow * er * 0.42 + (brow < 0 ? er * 0.1 : 0)], [x + s * er * 0.6, by + brow * er * 0.1 + (brow < 0 ? -er * 0.12 : 0)]].map(([a, b], i) => [a, i === 1 ? b : b]) , 7.5);
   }
-  if (L.monocle) { ell(g, cx + dx, ey, er * 1.18, er * 1.18); g.strokeStyle = "#c9a03a"; g.lineWidth = 5; g.stroke(); line(g, [[cx + dx + er, ey + er * 0.6], [cx + dx + er * 1.3, ey + R * 0.9]], 2.5, "#c9a03a"); }
-  if (L.glasses) for (const s of [-1, 1]) { ell(g, cx + s * dx, ey, er * 1.15, er * 1.15); g.strokeStyle = INK; g.lineWidth = 5; g.stroke(); }
+  if (L.monocle && (!side || dir > 0)) { ell(g, cx + dx, ey, er * 1.18, er * 1.18); g.strokeStyle = "#c9a03a"; g.lineWidth = 5; g.stroke(); line(g, [[cx + dx + er, ey + er * 0.6], [cx + dx + er * 1.3, ey + R * 0.9]], 2.5, "#c9a03a"); }
+  if (L.glasses) for (const s of side ? [dir] : [-1, 1]) { ell(g, cx + s * dx, ey, er * 1.15, er * 1.15); g.strokeStyle = INK; g.lineWidth = 5; g.stroke(); }
   // mouth
   const mx = cx + f * R * 0.08, my = hy + R * 0.48, m = P.mouth ?? "dash", mw = R * 0.2;
   g.lineCap = "round";
@@ -108,14 +113,15 @@ export const drawPerson = (g: G, L: Look, P: Pose) => {
   const legC = L.legs ?? INK;
   for (const s of [-1, 1]) {
     const fx = cx + s * 30 + s * sw * 46, lift = wk === undefined ? 0 : Math.max(0, -s * Math.cos(wk)) * 22;
-    line(g, [[cx + s * 26, hipY + bob], [cx + s * 28 + s * sw * 20, (hipY + foot) / 2], [fx, foot - 8 - lift]], 15); if (legC !== INK) line(g, [[cx + s * 26, hipY + bob], [cx + s * 28 + s * sw * 20, (hipY + foot) / 2], [fx, foot - 8 - lift]], 8, legC);
+    const knee = [cx + s * 28 + s * sw * 26 + (wk === undefined ? 0 : 10), (hipY + foot) / 2 - lift * 0.6];
+    noodle(g, [cx + s * 26, hipY + bob], knee, [fx, foot - 8 - lift], 15); if (legC !== INK) noodle(g, [cx + s * 26, hipY + bob], knee, [fx, foot - 8 - lift], 8, legC);
     ell(g, fx + 9, foot - 7 - lift, 21, 10); g.fillStyle = INK; g.fill();
   }
   g.translate(0, bob);
   // far arm (drawn behind the torso), then torso, then near arm on top
   const sh: [number, number][] = [[cx - tw * 0.82, ty - th * 0.5], [cx + tw * 0.82, ty - th * 0.5]];
   const hands = [P.lh ?? [-0.35, 1.25], P.rh ?? [0.35, 1.25]].map((h, i) => [sh[i][0] + h[0] * R, sh[i][1] + h[1] * R] as [number, number]);
-  const arm = (i: number) => { const s = i ? 1 : -1, h = hands[i], el: [number, number] = [(sh[i][0] + h[0]) / 2 + s * 16, (sh[i][1] + h[1]) / 2 + 20]; line(g, [sh[i], el, h], 14); drawHeld(g, i ? P.held ?? null : P.heldL ?? null, h[0], h[1], s); ell(g, h[0], h[1], 15, 15); g.fillStyle = INK; g.fill(); };
+  const arm = (i: number) => { const s = i ? 1 : -1, h = hands[i], el: [number, number] = [(sh[i][0] + h[0]) / 2 + s * 16, (sh[i][1] + h[1]) / 2 + 20]; noodle(g, sh[i], el, h, 14); drawHeld(g, i ? P.held ?? null : P.heldL ?? null, h[0], h[1], s); ell(g, h[0], h[1], 15, 15); g.fillStyle = INK; g.fill(); };
   const torso = () => { g.beginPath(); g.ellipse(cx, ty, tw, th, 0, 0, Math.PI * 2); };
   torso(); inkFill(g, L.coat, 10);
   g.save(); torso(); g.clip();
@@ -165,4 +171,7 @@ export const drawRat = (g: G, r: Rat) => {
 
 /** blink helper: a 4-frame blink at pseudo-random intervals of 0.6-2.4 s, different per character seed */
 export const blinkAt = (f: number, seed: number) => { let t = (seed * 37) % 50; let i = 0; while (t < f - 3) { t += 18 + ((Math.sin(seed * 12.9 + i++ * 78.2) * 43758.5) % 1 + 1) % 1 * 54; } return f >= t && f < t + 4; };
+/** mouth flap for a spoken line: three shapes changing every 3 frames between frames a and b (reference: mouths
+ *  move only on in-character lines, never under narration) */
+export const talk = (f: number, a: number, b: number): Mouth | undefined => (f >= a && f < b ? (["open", "dash", "o", "open", "smile"] as Mouth[])[Math.floor((f - a) / 3) % 5] : undefined);
 export const settle = (f: number, a: number, dur = 7) => clamp01((f - a) / dur);

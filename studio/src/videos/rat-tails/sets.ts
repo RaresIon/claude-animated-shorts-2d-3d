@@ -111,7 +111,7 @@ export const streetSet = (): SetDef => {
     [P.crate(0.7, "RICE"), [-2.6, 0, -0.7], 0.3],
     [P.barrel(0.9), [-3.3, 0, -1.0]],
     [P.sack(0.6), [-2.2, 0, -0.1], 0.4],
-    [P.basket(0.32), [2.2, 0, 0.2]],
+    [P.basket(0.32), [3.6, 0, -0.9]],
     [P.bunting(9, 13), [0, 5.4, -1.2]],
     [P.bunting(9, 13), [0.4, 6.3, -3.2]],
     [P.flagPole(3.6), [-2.2, 0.16, -3.4]],
@@ -119,7 +119,7 @@ export const streetSet = (): SetDef => {
     [P.poster(0.7, 1.0, TEX.bounty(), 0.05), [-0.2, 1.75, Z + 0.03]],
   ]);
   // grand-opening ribbon over the manhole (only for the ceremony shot)
-  const cer = group(put(P.cyl(0.05, 0.06, 1.1, "#e2b84a", 8), -1.05, 0, 1.2), put(P.cyl(0.05, 0.06, 1.1, "#e2b84a", 8), 1.05, 0, 1.2), put(P.box(2.1, 0.12, 0.02, "#d2261e"), 0, 0.92, 1.2),
+  const cer = group(put(P.cyl(0.05, 0.06, 0.75, "#e2b84a", 8), -1.05, 0, 1.2), put(P.cyl(0.05, 0.06, 0.75, "#e2b84a", 8), 1.05, 0, 1.2), put(P.box(2.1, 0.12, 0.02, "#d2261e"), 0, 0.58, 1.2),
     put(P.card(2.0, 0.62, TEX.opening(), { unlit: true }), 0, 2.55, -0.4), put(P.cyl(0.03, 0.03, 2.6, "#6b4a2d", 5), -0.95, 0, -0.4), put(P.cyl(0.03, 0.03, 2.6, "#6b4a2d", 5), 0.95, 0, -0.4));
   g.add(cer);
   const lamps: THREE.Object3D[] = []; // lit lamps and windows for the dusk ending

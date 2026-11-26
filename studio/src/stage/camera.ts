@@ -21,6 +21,11 @@ export const track = (f: number, keys: { f: number; cam: Cam; dur?: number; rate
   }
   return cur;
 };
+/** every camera breathes: a slow sway of about half a percent of its distance, so no hold is ever a frozen frame */
+export const drift = (c: Cam, f: number): Cam => {
+  const d = Math.hypot(c.pos[0] - c.look[0], c.pos[1] - c.look[1], c.pos[2] - c.look[2]);
+  return { ...c, pos: [c.pos[0] + Math.sin(f * 0.031) * 0.006 * d, c.pos[1] + Math.sin(f * 0.023 + 1.3) * 0.004 * d, c.pos[2]], roll: (c.roll ?? 0) + Math.sin(f * 0.019 + 0.7) * 0.004 };
+};
 /** impact shake: flips sign every frame and dies in `n` frames */
 export const shake = (c: Cam, f: number, at: number, amp = 0.12, n = 8): Cam => {
   const d = f - at; if (d < 0 || d >= n) return c;
