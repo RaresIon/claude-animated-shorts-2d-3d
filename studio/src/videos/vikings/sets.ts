@@ -38,6 +38,7 @@ export const TEX = {
   noMap: () => sign("vk-nomap", 256, 256, "#00000000", [], "#00000000", (g) => { g.fillStyle = "#e6d6a8"; g.strokeStyle = INK; g.lineWidth = 10; g.beginPath(); g.rect(34, 58, 188, 140); g.fill(); g.stroke(); g.strokeStyle = "#3d6a8a"; g.lineWidth = 8; g.beginPath(); g.moveTo(50, 150); g.bezierCurveTo(100, 90, 150, 190, 206, 110); g.stroke(); xIcon(g); }),
   noCompass: () => sign("vk-nocompass", 256, 256, "#00000000", [], "#00000000", (g) => { g.fillStyle = "#f3ead2"; g.strokeStyle = INK; g.lineWidth = 12; g.beginPath(); g.arc(128, 128, 84, 0, 7); g.fill(); g.stroke(); g.fillStyle = "#c8413a"; g.beginPath(); g.moveTo(128, 60); g.lineTo(146, 128); g.lineTo(110, 128); g.fill(); g.fillStyle = "#3a3540"; g.beginPath(); g.moveTo(128, 196); g.lineTo(146, 128); g.lineTo(110, 128); g.fill(); xIcon(g); }),
   num: (n: string) => sign(`vk-num${n}`, 200, 200, "#00000000", [{ t: n, size: 170, y: 104, col: "#ffe16a", font: "Poppins" }], "#00000000"),
+  zero: () => sign("vk-zero", 400, 300, "#00000000", [{ t: "0", size: 210, y: 110, col: "#ffe16a", font: "Poppins" }, { t: "FOOTPRINTS", size: 58, y: 250, col: "#ffe16a", font: "Poppins" }], "#00000000"),
   foot: () => sign("vk-foot", 160, 220, "#00000000", [], "#00000000", (g) => { g.fillStyle = "#7a5a34"; g.beginPath(); g.ellipse(80, 130, 42, 70, 0, 0, 7); g.fill(); for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(34 + i * 23, 44 - Math.sin(i * 0.8) * 12, 11 - i, 0, 7); g.fill(); } }),
   wind: () => sign("vk-wind", 512, 96, "#00000000", [], "#00000000", (g) => { g.strokeStyle = "#ffffff"; g.lineCap = "round"; g.lineWidth = 12; g.beginPath(); g.moveTo(20, 60); g.bezierCurveTo(160, 20, 300, 80, 420, 40); g.bezierCurveTo(470, 24, 492, 50, 470, 66); g.stroke(); }),
   q: () => sign("vk-q", 128, 160, "#00000000", [{ t: "?", size: 150, y: 84, col: "#ffffff", font: "Poppins" }], "#00000000"),
@@ -55,10 +56,10 @@ const shoreBand = (kind: Exclude<Kind, "fog">, x0: number, x1: number, seed: num
   const land = new THREE.Mesh(new THREE.PlaneGeometry(w, 120).rotateX(-Math.PI / 2), P.lit(t)); land.receiveShadow = true; land.position.set(cx, 0.06, -SHORE - 60); g.add(land);
   g.add(put(P.box(w, 0.1, 1.2, "#eaf7fd", false), cx, 0, -SHORE + 0.5)); // surf line
   if (kind === "forest" || kind === "flat") {
-    const gt = grass(kind === "forest" ? "#5f9a48" : "#8ab060", [1, 1]); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(w / 2.4, 44);
+    const gt = grass(kind === "forest" ? "#5f9a48" : "#c9c070", [1, 1]); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(w / 2.4, 44);
     g.add(put(new THREE.Mesh(new THREE.PlaneGeometry(w, 100).rotateX(-Math.PI / 2), P.lit(gt)), cx, 0.09, -SHORE - 55));
-    for (let i = 0; i < Math.round((kind === "forest" ? 0.36 : 0.13) * w); i++) g.add(put(P.pine(4 + r() * 3.5, kind === "forest" ? "#2f6a4a" : "#4a8a5a", i + seed), rx(), 0.09, -SHORE - 4.5 - r() * (kind === "forest" ? 22 : 30)));
-    for (let i = 0; i < Math.round(w / 22) + 1; i++) g.add(put(P.hill(18 + (i % 3) * 8, i % 2 ? "#5f9a48" : "#4f8a48", 0.3 + (i % 2) * 0.12), x0 + i * 24, 0, -SHORE - 46 - (i % 3) * 8));
+    for (let i = 0; i < Math.round((kind === "forest" ? 0.36 : 0) * w); i++) g.add(put(P.pine(4 + r() * 3.5, kind === "forest" ? "#2f6a4a" : "#4a8a5a", i + seed), rx(), 0.09, -SHORE - 4.5 - r() * (kind === "forest" ? 22 : 30)));
+    for (let i = 0; i < Math.round(w / 22) + 1; i++) g.add(put(P.hill(18 + (i % 3) * 8, kind === "flat" ? (i % 2 ? "#e0cf9a" : "#d2bf86") : i % 2 ? "#5f9a48" : "#4f8a48", 0.3 + (i % 2) * 0.12), x0 + i * 24, 0, -SHORE - 46 - (i % 3) * 8));
     for (let i = 0; i < Math.round(w / 18); i++) g.add(put(P.rock(0.3 + r() * 0.4, "#a8a096", i), clear(rx()), 0.06, -SHORE - 0.8 - r() * 2.6));
     for (let i = 0; i < Math.round(w / 9); i++) g.add(put(P.bush(0.6 + r() * 0.5, "#4f8a48", i), rx(), 0.09, -SHORE - 5.2 - r() * 1.5));
   }
@@ -161,8 +162,8 @@ export const vinland = (): SetDef => water("forest", "harbour", (g) => {
   dress(g, [
     [P.longhouse(3.6, "#9a7a52", "#5f9a48"), [3.6, 0.09, -SHORE - 5.6], -0.2],
     [P.campfire(), [1.6, 0.06, -SHORE - 3.5]],
-    [P.box(0.09, 1.9, 0.09, "#6b4a2d"), [0.0, 0.06, -SHORE - 4.4]],
-    [P.poster(1.5, 0.54, TEX.vinland(), -0.04), [0.0, 1.5, -SHORE - 4.34]],
+    [P.box(0.09, 3.5, 0.09, "#6b4a2d"), [0.9, 0.06, -SHORE - 4.6]],
+    [P.poster(1.5, 0.54, TEX.vinland(), -0.04), [0.9, 3.1, -SHORE - 4.54]],
     [P.crate(0.55, "GRAPES"), [2.6, 0.06, -SHORE - 2.6], 0.3],
     [P.barrel(0.7), [3.3, 0.06, -SHORE - 3.0]],
     [P.sack(0.5), [-1.4, 0.06, -SHORE - 3.3]],

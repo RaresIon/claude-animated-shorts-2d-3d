@@ -314,7 +314,6 @@ export const longhouse = (w = 5, wall = "#8a6a4a", turf = "#5f8a48") => {
   const tri = new THREE.Shape(); tri.moveTo(-1.75, 0); tri.lineTo(1.75, 0); tri.lineTo(0, 1.25); tri.closePath();
   const roof = new THREE.ExtrudeGeometry(tri, { depth: w + 0.5, bevelEnabled: false }); roof.translate(0, 0, -(w + 0.5) / 2); roof.rotateY(Math.PI / 2); roof.translate(0, 1.5, 0);
   g.add(inked(roof, lit(grassTex(turf))), at(door(0.85, 1.4, "#5a3d24"), -w * 0.2, 0, 1.42), at(windowLit(0.5, 0.5, "#ffd98a", "#5a3d24"), w * 0.25, 0.7, 1.41), at(cyl(0.16, 0.2, 0.5, "#6b6470", 7), w * 0.3, 2.5, 0));
-  for (const s of [-1, 1]) g.add(at(box(0.1, 1.0, 0.1, "#5a3d24"), s * (w / 2 + 0.2), 2.3, 1.2, 0, 0, s * 0.5));
   return g;
 };
 const grassTex = (c: string) => planks(c, 9, true, [4, 2]);
