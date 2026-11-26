@@ -1,0 +1,74 @@
+# SFX cues (time s, frame, event)
+
+-   0.00 s  f   0  outback day air
+-   4.13 s  f 124  flash whoosh
+-   5.13 s  f 154  migration: many soft footfalls
+-  11.37 s  f 341  transition whoosh
+-  14.94 s  f 448  peck
+-  15.00 s  f 450  chew crunch
+-  15.09 s  f 453  peck
+-  15.20 s  f 456  peck
+-  15.33 s  f 460  peck
+-  15.47 s  f 464  peck
+-  15.53 s  f 466  trample
+-  15.59 s  f 468  peck
+-  15.74 s  f 472  peck
+-  15.85 s  f 475  peck
+-  16.00 s  f 480  peck
+-  16.12 s  f 484  peck
+-  16.77 s  f 503  kick, fence post cracks
+-  16.85 s  f 505  wire twang
+-  17.53 s  f 526  kick, fence post cracks
+-  17.61 s  f 528  wire twang
+-  18.20 s  f 546  rabbit hop
+-  18.48 s  f 554  rabbit hop
+-  18.76 s  f 563  rabbit hop
+-  19.04 s  f 571  rabbit hop
+-  19.32 s  f 580  rabbit hop
+-  21.33 s  f 640  truck arrives
+-  22.87 s  f 686  brake + stop
+-  23.00 s  f 690  gun clank
+-  23.70 s  f 711  crate thud
+-  24.07 s  f 722  crates
+-  24.32 s  f 730  crates
+-  24.57 s  f 737  crates
+-  26.83 s  f 805  dam water
+-  29.77 s  f 893  Lewis gun burst
+-  29.93 s  f 898  emus scatter
+-  30.97 s  f 929  gun jams
+-  31.17 s  f 935  smoke fizz
+-  32.43 s  f 973  truck driving
+-  34.43 s  f1033  takeoff whoosh
+-  34.53 s  f1036  emu running feet
+-  36.37 s  f1091  emus running
+-  36.37 s  f1091  truck chase engine
+-  37.67 s  f1130  wild shots
+-  37.97 s  f1139  wild shots
+-  38.27 s  f1148  truck slams a bump
+-  38.27 s  f1148  wild shots
+-  38.57 s  f1157  wild shots
+-  38.67 s  f1160  truck slams a bump
+-  38.87 s  f1166  wild shots
+-  39.17 s  f1175  wild shots
+-  39.20 s  f1176  truck slams a bump
+-  39.47 s  f1184  wild shots
+-  39.77 s  f1193  wild shots
+-  40.03 s  f1201  transition whoosh
+-  45.07 s  f1352  lookout spots
+-  46.10 s  f1383  everybody scatters
+-  47.27 s  f1418  golden evening: breeze, crickets
+-  47.40 s  f1422  transition whoosh
+-  50.63 s  f1519  bullet tink
+-  50.72 s  f1522  bullet tink
+-  50.81 s  f1524  bullet tink
+-  50.89 s  f1527  bullet tink
+-  50.98 s  f1529  bullet tink
+-  51.07 s  f1532  bullet tink
+-  51.15 s  f1535  bullet tink
+-  51.24 s  f1537  bullet tink
+-  51.33 s  f1540  bullet tink
+-  51.41 s  f1542  bullet tink
+-  51.47 s  f1544  feather lands
+-  53.37 s  f1601  marching emus
+-  56.93 s  f1708  truck drives away
+-  59.60 s  f1788  delicious crunch
