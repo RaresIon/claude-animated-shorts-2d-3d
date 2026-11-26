@@ -60,10 +60,10 @@ const Inner: React.FC<{ id: number; kit: Kit }> = ({ id, kit }) => {
     grade: new GradeEffect(GRADES.day, GRADE_STRENGTH.day),
     grain: new GrainEffect({ amount: 0.025, cellPx: 1.5 }), // film grain, OFF by default (inputProps post.grain): the reference measures no grain and it quadruples the file size
   }), [camera, scene]);
-  useEffect(() => () => fx.ink.dispose(), [fx]);
+  useEffect(() => () => { try { (fx.ink as unknown as { dispose?: () => void }).dispose?.(); } catch { /* ignore */ } }, [fx]);
   const lensOn = dofAt(f).cInf > 0.01, bloomOn = SHOTS[id - 1].light === "golden";
   const post = useMemo(() => (
-    <EffectComposer multisampling={(getInputProps() as { post?: { msaa?: number } }).post?.msaa ?? 2}>
+    <EffectComposer multisampling={(getInputProps() as { post?: { msaa?: number } }).post?.msaa ?? 4}>
       {on.ink ? <primitive object={fx.ink} dispose={null} /> : null}
       {on.lens && on.pre && lensOn ? <primitive object={fx.lens.pre} dispose={null} /> : null}
       {on.lens && lensOn ? <primitive object={fx.lens.main} dispose={null} /> : null}
@@ -93,7 +93,7 @@ const Inner: React.FC<{ id: number; kit: Kit }> = ({ id, kit }) => {
 };
 
 /** test stills only: inputProps `{ post: { dpr: 0.5 } }` forces the WebGL buffer size (R3F clamps dpr to >= 1 by default) */
-const dprOverride = () => (getInputProps() as { post?: { dpr?: number } }).post?.dpr ?? 0.5;
+const dprOverride = () => (getInputProps() as { post?: { dpr?: number } }).post?.dpr;
 const ShotView: React.FC<{ id: number; kit: Kit; alpha: number }> = ({ id, kit, alpha }) => (
   <AbsoluteFill style={{ opacity: alpha }}>
     <ThreeCanvas width={1080} height={1920} {...(dprOverride() ? { dpr: dprOverride() } : {})} shadows={(getInputProps() as { post?: { shadows?: boolean } }).post?.shadows ?? true} gl={{ antialias: false, stencil: false, powerPreference: "high-performance", toneMappingExposure: 1.0 }}

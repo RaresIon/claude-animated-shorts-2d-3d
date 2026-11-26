@@ -42,6 +42,15 @@ const featherTicks = (p: Pen, cx: number, cy: number, a: number, b: number, seed
   }
 };
 
+const wheatEar = (p: Pen, x0: number, y0: number, x1: number, y1: number, s: number) => {
+  p.stroke([[x0, y0], [x1, y1]], 5 * s, "#c9a23f");
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+  for (let k = 0; k < 5; k++) for (const sd of [-1, 1]) {
+    const t = L + 6 * s + k * 10 * s, cx = x0 + ux * t - uy * sd * 6 * s, cy = y0 + uy * t + ux * sd * 6 * s;
+    p.ell(cx, cy, 8 * s, 4.5 * s, "#e8c45a", 2.2 * s, 0, 360, ang + sd * 25);
+  }
+  p.stroke([[x0 + ux * (L + 50 * s), y0 + uy * (L + 50 * s)], [x0 + ux * (L + 80 * s), y0 + uy * (L + 80 * s)]], 2 * s, "#c9a23f");
+};
 /** emu beak (pointing toward +x from (bx, by)), closed or open; s = scale */
 const beak = (p: Pen, bx: number, by: number, s: number, open: number, dir = 1) => {
   const L = 46 * s, Hh = 13 * s, op = open * 16 * s;
@@ -56,7 +65,7 @@ const headSide = (p: Pen, hx: number, hy: number, o: EmuOpts, light: number, thi
   const a = 54 * s, H: Blob = { a, b: a * 0.84, nTop: 1.9, nBot: 2.3, egg: -0.08, asym: 0.14, rot: rad(-6), noise: 0.006, seed: (o.seed ?? 1) + 31 };
   const hp = blobPts(hx, hy, H), u = (2 * a) / 100, expr = o.expr ?? "neutral", F = FACE[expr];
   const open = F.mouth === "grin" || F.mouth === "laugh" ? 1 : F.mouth === "O" ? 1.2 : F.mouth === "o" || o.mode === "chew" ? 0.35 : 0;
-  if (o.wheat) { p.stroke([[hx + 1.2 * a, hy + 0.25 * a], [hx + 2.2 * a, hy - 0.15 * a]], 5 * s, "#c9a23f"); p.ell(hx + 2.3 * a, hy - 0.2 * a, 14 * s, 7 * s, "#e0b84c", 3 * s, 0, 360, -20); }
+  if (o.wheat) wheatEar(p, hx + 1.2 * a, hy + 0.25 * a, hx + 1.9 * a, hy - 0.05 * a, s);
   p.shadedFill(hp, SKIN_N, mul(SKIN_N, [0.82, 0.84, 0.9]), light, a);
   p.clip(hp, () => { // dark shaggy crown + nape
     const cr = blobPts(hx - 0.25 * a, hy - 0.55 * a, { ...H, a: a * 0.85, b: a * 0.55, asym: 0, seed: H.seed + 2 });
@@ -106,7 +115,7 @@ const headFront = (p: Pen, hx: number, hy: number, o: EmuOpts, light: number, th
     const k = F.mouth === "smile" || F.mouth === "smirk" || F.mouth === "smileWide" ? 1 : F.mouth === "frown" ? -1 : 0;
     p.stroke(curve([hx - 30 * s, by + 4 * s], [hx, by + (12 + 6 * k) * s], [hx + 30 * s, by + 4 * s - k * 6 * s]), 3.5 * s);
   }
-  if (o.wheat) { p.stroke([[hx + 20 * s, by + 4 * s], [hx + 70 * s, by - 34 * s]], 5 * s, "#c9a23f"); p.ell(hx + 74 * s, by - 40 * s, 14 * s, 7 * s, "#e0b84c", 3 * s, 0, 360, -40); }
+  if (o.wheat) wheatEar(p, hx + 20 * s, by + 4 * s, hx + 60 * s, by - 26 * s, s);
 };
 
 /** tiny slouch hat on an emu ("we could face any army") */

@@ -101,7 +101,7 @@ export type Stage = { places: Place[]; fx: FxPlace[] };
 const hh = (i: number, s = 0) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
 const q = (v: number, n = 120) => Math.round(v * n) / n;
 const tier = (d: number): [number, number, number] =>
-  d < 3.2 ? [1080, 1800, 1.8] : d < 6.5 ? [660, 1100, 1.1] : d < 16 ? [360, 600, 0.6] : d < 40 ? [180, 300, 0.3] : [96, 160, 0.16];
+  d < 3.2 ? [1800, 3000, 3.0] : d < 6.5 ? [1080, 1800, 1.8] : d < 16 ? [480, 800, 0.8] : d < 40 ? [240, 400, 0.4] : [120, 200, 0.2];
 const tmp = new THREE.Vector3();
 let CAM: CamInfo;
 /** canvas angle the sun comes FROM on an upright card facing the camera, in 45-degree steps */
@@ -179,7 +179,7 @@ const emu = (out: Stage, i: number, x: number, z: number, dx: number, dz: number
   const mirror = v.side && v.mirror, light = light2D(mirror);
   const o2: EmuOpts = { blink: lidAt(f, i + 500), seed: (i % 9) + 1, ...o, light };
   // far emus: fewer distinct drawings (quantised walk phase, no blinks)
-  if (w <= 180) { o2.blink = 0; if (o2.phase !== undefined) o2.phase = q(o2.phase, 8); if (o2.pose !== undefined) o2.pose = q(o2.pose, 6); o2.seed = (i % 3) + 1; }
+  if (w <= 240) { o2.blink = 0; if (o2.phase !== undefined) o2.phase = q(o2.phase, 8); if (o2.pose !== undefined) o2.pose = q(o2.pose, 6); o2.seed = (i % 3) + 1; }
   out.places.push({
     key: v.side ? `ES|${fkey(o2)}` : `EF|${fkey(o2)}`, x, y, z, mirror,
     draw: (p) => (v.side ? emuSide(p, o2) : emuFront(p, o2)), size: [w, h, k],
@@ -360,10 +360,10 @@ const SETS: Record<string, (c: Ctx) => void> = {
     for (let i = 0; i < 10; i++) {
       const fi = 1519 + i * 2.6, u = clamp01((c.f - fi) / 4);
       if (u <= 0) continue;
-      fx(c.out, "bullet", 100, 300, fxBullet, -0.225 + i * 0.05, 0.045 * u, -9.6, 0.03 * u, 0.09 * u);
+      fx(c.out, "bullet", 100, 300, fxBullet, -0.315 + i * 0.07, 0.068 * u, -9.6, 0.045 * u, 0.135 * u);
     }
     const uf = clamp01((c.f - 1544) / 5);
-    if (uf > 0) fx(c.out, "feather", 320, 120, fxFeather, 0.0, 0.015, -9.42, 0.34 * uf, 0.13 * uf, { flat: true, rot: 0.2 });
+    if (uf > 0) fx(c.out, "feather", 320, 120, fxFeather, 0.0, 0.015, -9.3, 0.5 * uf, 0.19 * uf, { flat: true, rot: 0.2 });
   },
   majorSays: (c) => person(c.out, 1, MAJOR_O, "major", MAJOR[0], 0, MAJOR[2], 0, 1, { expr: exprAt(c.f, [[1569, "shock"], [1585, "relief_open"]]), mode: "stand" }, {}, c.f, { front: true }),
   march: (c) => {

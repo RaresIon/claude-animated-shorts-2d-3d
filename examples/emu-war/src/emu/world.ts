@@ -35,7 +35,8 @@ const trackTex = () => ctex("track", 512, 512, (g, r) => {
 });
 const fieldTex = () => ctex("fieldFar", 512, 512, (g, r) => {
   g.fillStyle = "#e0b44c"; g.fillRect(0, 0, 512, 512);
-  for (let y = 0; y < 512; y += 16) { g.fillStyle = y % 32 ? "rgba(180,130,40,0.35)" : "rgba(250,220,120,0.35)"; g.fillRect(0, y, 512, 8); }
+  for (let x = 0; x < 512; x += 64) { g.fillStyle = "rgba(150,100,30,0.55)"; g.fillRect(x, 0, 14, 512); g.fillStyle = "rgba(255,232,150,0.5)"; g.fillRect(x + 30, 0, 18, 512); }
+  for (let y = 0; y < 512; y += 16) { g.fillStyle = y % 32 ? "rgba(180,130,40,0.2)" : "rgba(250,220,120,0.2)"; g.fillRect(0, y, 512, 8); }
   for (let i = 0; i < 900; i++) { const x = r() * 512, y = r() * 512; g.strokeStyle = i % 2 ? "rgba(255,230,140,0.6)" : "rgba(160,110,30,0.45)"; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 2, y - 12); g.stroke(); }
 });
 const wheatTex = () => ctex("wheatTuft", 256, 256, (g, r) => {
@@ -222,7 +223,7 @@ export class World {
     this.hemi = new THREE.HemisphereLight("#cfe6ff", "#6c5c8c", 1.1);
     this.sun = new THREE.DirectionalLight("#fff0d6", 2.6);
     this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(1536, 1536);
+    this.sun.shadow.mapSize.set(4096, 4096);
     R.add(this.hemi, this.sun, this.sun.target);
     this.cloudMaps = { day: [0, 1, 2, 3].map((k) => cloudHD(k, LOOK.day.cloud)), golden: [0, 1, 2, 3].map((k) => cloudHD(k, LOOK.golden.cloud)) };
     for (let i = 0; i < 10; i++) {
@@ -424,7 +425,7 @@ export class World {
       const broken = after && (id > 10 || f >= 503) && (Math.abs(w.x0 - KICK_X) < 0.1 || Math.abs(w.x0 - (KICK_X - 4)) < 0.1)
         || after && (id > 10 || f >= 526) && Math.abs(w.x0 - (KICK_X - 8)) < 0.1;
       const h = w.o.userData.h as number;
-      w.o.position.y = broken ? 0.06 + h * 0.08 : h; w.o.rotation.z = broken ? 0.02 : 0;
+      w.o.position.y = h; w.o.visible = !broken;
     }
     this.pump.rotation.z = (f / FPS) * 2.2;
     const low = camAt(id, f).pos[1] < 8;
