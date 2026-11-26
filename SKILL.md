@@ -113,11 +113,11 @@ swaps with no pop. Turn them off
 | File | What it gives you |
 |---|---|
 | `Stage.tsx` | the engine: `Film`, `Shot`, `CastItem`; sets swapped per shot, mood lights, shadow-mapped key light, 2D cast as lens-facing cards with contact shadows, cross-dissolves and camera travel between shots, time `warp`, vignette, captions |
-| `props.ts` | `inked()` (inverted-hull outline, constant width on screen), `box/cyl/ball/card`, `lightPool`, `contact`, and the prop library; `dress()` to place many at once |
-| `sets.ts` | `room`, `street`, `tunnel`, `field` |
-| `paint.ts` | painted surfaces (planks, plaster with exposed brick, bricks, cobbles, tiles, dirt, grass, stone) and `sign()` for lettering |
-| `chars.ts` | `drawPerson(look, pose)`: 8 hats, held props, 8 eye types, 9 mouths, brows, curved limbs, walk cycle, side view, squash, lean; `talk` (mouth flap for a spoken line); `drawRat`; `blinkAt` |
-| `moods.ts` | the seven light moods: sky, ambient, key, fog, cast tint, grade, vignette |
+| `props.ts` | `inked()` (inverted-hull outline, constant width on screen), `box/cyl/ball/card`, `lightPool`, `contact`, and the prop library (indoor, street, farm, and a coast set: `longship`, `longhouse`, `dock`, `fishRack`, `campfire`, `pine`, `glacier`, `iceberg`, `rock`); `dress()` to place many at once |
+| `sets.ts` | `room`, `street`, `tunnel`, `field`, `sea` (animated water, optional shore) |
+| `paint.ts` | painted surfaces (planks, plaster with exposed brick, bricks, cobbles, tiles, dirt, grass, sand, stone) and `sign()` for lettering |
+| `chars.ts` | `drawPerson(look, pose)`: 11 hats (incl. helmet, hood, fur), held props (incl. bowl, ladle), 8 eye types, 9 mouths, brows, curved limbs, walk cycle, side view, squash, lean; `talk` (mouth flap for a spoken line); `drawRat`; `blinkAt` |
+| `moods.ts` | the nine light moods (day, golden, dusk, night, sewer, interior, fog, arctic, explain): sky, ambient, key, fog, cast tint, grade, vignette |
 | `camera.ts` | `track` (hold + burst), `push`, `drift` (always on), `shake` |
 | `Captions.tsx` | word-by-word captions from `words.json` |
 | `util.ts` | easing (`burst`, `overshoot`, `bump`), seeded random, colours, cached canvas textures |
@@ -137,5 +137,9 @@ To add a creature or a new kind of character, add a `draw…` function in `chars
   is also what reads best) and renders stay fast.
 - The frame is narrow. Before placing two characters side by side, work out the visible width at their distance:
   `2 * dist * tan(fov/2) * 9/16`.
+- A row of people (a ship's crew, a queue) is wider than a vertical frame from the side. Shoot along the row, from
+  the bow or the stern, so they stack in depth; keep side views for one or two people.
+- After any camera change, render stills of every shot and check that no person or sign is cut by the frame edge.
+  `plan_lint` checks size and captions, not edges.
 - Flags, uniforms and signs are period details: check them (the bridge short's first flag read as the wrong country).
 - Every Remotion bundle copies `public/` into the temp folder. Keep `public/` small (fonts only) and it stays a non-issue.
