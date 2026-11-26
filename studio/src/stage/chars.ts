@@ -144,7 +144,7 @@ export const drawRat = (g: G, r: Rat) => {
   g.save(); if (r.baby) { g.translate(150, 200); g.scale(k, k); g.translate(-150, -200); }
   // tail (behind): long pink S-curve, or a bandaged stub
   if (r.tail !== false) { g.lineCap = "round"; g.strokeStyle = INK; g.lineWidth = 17; g.beginPath(); g.moveTo(74, by + 10); g.bezierCurveTo(30, by + 30, 40, by - 40, 10, by - 30 + Math.sin(ph * 2) * 8); g.stroke(); g.strokeStyle = r.coinTail ? "#f2c230" : "#e79aa6"; g.lineWidth = 9; g.stroke(); }
-  else if (r.bandage) { g.beginPath(); g.roundRect(52, by - 4, 30, 24, 8); inkFill(g, "#ffffff", 6); g.fillStyle = "#d94a4a"; g.fillRect(63, by + 2, 8, 12); g.fillRect(61, by + 5, 12, 6); }
+  else if (r.bandage) { g.beginPath(); g.roundRect(34, by - 10, 46, 34, 10); inkFill(g, "#ffffff", 7); g.fillStyle = "#d94a4a"; g.fillRect(52, by - 2, 9, 19); g.fillRect(47, by + 3, 19, 9); }
   // legs
   if (!r.dead) for (const [x, s] of [[104, 1], [128, -1], [182, -1], [206, 1]] as const) { const a = r.sit ? 0 : Math.sin(ph + (s > 0 ? 0 : Math.PI)) * 22; line(g, [[x, by + 34], [x + a, 196 - Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * 10]], 11); }
   else for (const x of [112, 132, 180, 200]) line(g, [[x, by - 30], [x + 4, by - 66]], 11);

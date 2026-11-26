@@ -157,9 +157,9 @@ voice, gate = voice[:, :N], gate[:N]
 mus = mus * dbg(VREF - 11.0 - integrated(mus))          # music bed ~11 LU under the voice ...
 mus = mus * (1.0 - 0.45 * gate)[None, :] * 1.6            # ... lifted in the gaps, ducked on speech
 mix = voice + mus + sfx
-mix = mix * dbg(-14.0 - integrated(mix))
-pk = true_peak(mix)
-if pk > -1.0: mix = np.tanh(mix * dbg(-1.0 - pk) * 1.15) / np.tanh(1.15) * dbg(-1.0)
+for _ in range(4):  # normalise to -14 LUFS, soft-limit the peaks, repeat until both hold
+    mix = mix * dbg(-14.0 - integrated(mix))
+    c = dbg(-1.5); mix = np.where(np.abs(mix) > c * 0.7, np.sign(mix) * (c * 0.7 + c * 0.3 * np.tanh((np.abs(mix) - c * 0.7) / (c * 0.3))), mix)
 mix[:, -ns(0.05):] *= np.linspace(1, 0, ns(0.05))
 write_wav(os.path.join(HERE, "mix.wav"), mix)
 open(os.path.join(HERE, "cues.md"), "w").write("# Cue sheet (frame @30 fps, time, what)\n\n" + "\n".join(f"- {int(f):4d}  {f / FPS:6.2f} s  {n}" for f, n in sorted(cues)) + "\n")

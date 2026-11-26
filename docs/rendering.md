@@ -33,10 +33,15 @@ For a 2K export pass a scale: `node scripts/render.mjs RatTails out/x.mp4 audio/
 The Modal Remotion workflow lives in the private `sitefarmDocs` repository (branch `claude/funny-volta-5klybo`:
 `shorts/remotion/modal_remotion.py` and `.github/workflows/remotion-modal.yml`). To use it:
 
-1. Copy `studio/` to `shorts/remotion/<project>/` on a branch based on that one.
+1. Copy `studio/` (without `node_modules`, `out` and the wav files) to `shorts/remotion/<project>/` on a branch
+   based on that one. `studio/render.json` names the composition and the frame count; `scripts/render-chunk.mjs` is
+   the entry the Modal script calls.
 2. Upload the mix to R2 as `previews/<project>/mix.wav`.
-3. Push with `[render]` in the commit message.
+3. Set the workflow's default `PROJECT` to your project on that branch and push with `[render]` in the commit message
+   (or run the workflow by hand with the project as input).
 4. Fetch `previews/<project>/<project>.mp4` from R2.
+
+The Modal script renders 20-frame chunks on separate 8-vCPU containers, so a 45 s short is done in minutes.
 
 A session needs that repository attached with push access. Without it, render locally: the result is identical.
 

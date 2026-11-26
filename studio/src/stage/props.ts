@@ -28,7 +28,7 @@ export const glow = (c: string) => new THREE.MeshBasicMaterial({ color: c, fog: 
 /** a mesh plus its ink outline */
 export const inked = (geo: THREE.BufferGeometry, mat: THREE.Material, ink = true) => {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(geo, mat));
+  const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; g.add(m);
   if (ink) g.add(new THREE.Mesh(hullGeo(geo), inkMat));
   return g;
 };

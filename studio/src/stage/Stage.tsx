@@ -41,6 +41,9 @@ class Engine {
   castRoot = new THREE.Group();
   constructor(private film: Film, private scene: THREE.Scene) {
     scene.add(this.amb, this.sun, this.sun.target, this.castRoot); scene.fog = this.fog;
+    // real cast shadows from the key light (props and sets); the 2D cast keeps its soft contact blobs
+    const sh = this.sun.shadow; this.sun.castShadow = true; sh.mapSize.set(2048, 2048); sh.bias = -0.0006; sh.normalBias = 0.03; sh.radius = 5;
+    const oc = sh.camera; oc.left = -9; oc.right = 9; oc.top = 9; oc.bottom = -9; oc.near = 1; oc.far = 80; oc.updateProjectionMatrix();
   }
   private set(name: string) {
     let s = this.sets.get(name);
@@ -77,7 +80,8 @@ class Engine {
     const c = shot.cam(f), yaw = whip(f, shot.a, shot.b, shot.into === "whip", next?.into === "whip");
     cam.position.set(...c.pos); cam.fov = c.fov ?? 40; cam.aspect = aspect; cam.near = 0.1; cam.far = 400; cam.up.set(0, 1, 0);
     cam.lookAt(c.look[0], c.look[1], c.look[2]); cam.rotateY(-yaw); cam.rotateZ(c.roll ?? 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
-    this.sun.position.set(cam.position.x + m.key[2][0], cam.position.y + m.key[2][1], cam.position.z + m.key[2][2]); this.sun.target.position.copy(cam.position);
+    const kd = new THREE.Vector3(...m.key[2]).normalize().multiplyScalar(30);
+    this.sun.target.position.set(c.look[0], 0, c.look[2]); this.sun.position.set(c.look[0] + kd.x, kd.y, c.look[2] + kd.z); this.sun.target.updateMatrixWorld();
     // cast
     for (const v of this.cards.values()) { v.mesh.visible = false; v.sh.visible = false; }
     const camYaw = Math.atan2(cam.position.x - c.look[0], cam.position.z - c.look[2]);
@@ -111,7 +115,8 @@ class Engine {
 const Inner: React.FC<{ film: Film }> = ({ film }) => {
   const f = useCurrentFrame();
   const { width, height } = useVideoConfig();
-  const { camera, scene } = useThree();
+  const { camera, scene, gl } = useThree();
+  gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap;
   const engine = useMemo(() => new Engine(film, scene), [film, scene]);
   engine.update(f, camera as THREE.PerspectiveCamera, width / height);
   return null;
@@ -142,7 +147,7 @@ export const Stage: React.FC<{ film: Film }> = ({ film }) => {
   return (
     <AbsoluteFill style={{ background: "#000" }}>
       <AbsoluteFill style={{ filter: m.css + (whipping ? " blur(7px)" : "") }}>
-        <ThreeCanvas width={width} height={height} flat gl={{ antialias: true }} camera={{ fov: 40, near: 0.1, far: 400 }}>
+        <ThreeCanvas width={width} height={height} flat shadows gl={{ antialias: true }} camera={{ fov: 40, near: 0.1, far: 400 }}>
           <Inner film={film} />
         </ThreeCanvas>
       </AbsoluteFill>

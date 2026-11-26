@@ -35,6 +35,7 @@ export const ctex = (key: string, w: number, h: number, draw: (g: G, r: () => nu
   const k = key + (repeat ? `@${repeat[0]}x${repeat[1]}` : "");
   let t = texCache.get(k);
   if (t) return t;
+  if (typeof document === "undefined") return new THREE.Texture() as THREE.CanvasTexture; // node (plan_lint): no pixels needed
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const g = c.getContext("2d")!;
   draw(g, rng(key.split("").reduce((a, ch) => a + ch.charCodeAt(0), 7)));

@@ -20,7 +20,9 @@ characters, jokes, logos or audio. Learn the craft, make your own story.
 
 ## The seven rules that make the look
 
-These are gates, not advice. `scripts/frame_qa.py` checks the first four.
+These are gates, not advice. Two scripts check them without anyone's judgment: `scripts/plan_lint.ts` (before
+rendering: cast size, faces under captions, dead shots, cuts, moods) and `scripts/frame_qa.py` (after: empty frame
+share, sharpness, palette, moods).
 
 1. **Fill the frame.** A 9:16 frame is only about 2.8 m wide when it shows 5 m of height, so stack the set
    vertically: lamp and pictures above, cast in the middle, named props on the floor in front. A set is not done until
@@ -68,19 +70,23 @@ Captions are **on** by default: one to three words, bold white with a black outl
 6. **Shots** (`film.ts`). Per shot: `a`, `b` (frames), `set`, `mood`, `cam` (a `track()` of framings), `cast`
    (people, rats or other creatures, effect cards, each a function of the frame) and `into`. Time every beat to
    `words.json`.
-7. **Stills, every shot.** `node scripts/stills.mjs <Comp> out/s_ <frames> 0.5`: one frame per beat (about 5 s
+7. **Lint the plan (no rendering).** `npx tsx scripts/plan_lint.ts <film>` projects every character through
+   every shot's camera and fails on: a cast smaller than 30 % of the frame height, a face under the caption, a shot
+   where nothing changes, too many plain cuts, fewer than three moods. It takes two seconds: run it after every edit.
+8. **Stills, every shot.** `node scripts/stills.mjs <Comp> out/s_ <frames> 0.5`: one frame per beat (about 5 s
    each on CPU). Make a contact sheet and **look at it**. Fix framing: nobody cut by the frame edge, no prop hiding a
    face or a sign, nothing important under the caption.
-8. **Sound** (`audio/`). `python3 audio/fetch_sfx.py` pulls CC0 effects from Freesound (credits file written
+9. **Sound** (`audio/`). `python3 audio/fetch_sfx.py` pulls CC0 effects from Freesound (credits file written
    automatically); `python3 audio/make.py` builds the score, places each effect on its picture frame and mixes:
    voice unchanged, music about 11 LU under it and ducked on speech, effects placed relative to the voice,
    -14 LUFS, true peak under -1 dB. Lock picture timing before this step.
-9. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/mix.wav` (resumable chunks; about 3 s per
-   frame at 1080x1920 on four CPU cores, far faster with `GL=angle-egl` on a GPU). See `docs/rendering.md`.
-10. **QA, required.** `python3 scripts/frame_qa.py out/<film>.mp4 --sheet out/qa.jpg` must print PASS. Then read
+10. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/mix.wav` (resumable chunks; about 3 s per
+   frame at 1080x1920 on four CPU cores, far faster with `GL=angle-egl` on a GPU), or on Modal in parallel
+   chunks. See `docs/rendering.md`.
+11. **QA, required.** `python3 scripts/frame_qa.py out/<film>.mp4 --sheet out/qa.jpg` must print PASS. Then read
     the sheet yourself, and hand it to a reviewer agent that has not seen your plan, with `docs/style-rules.md` as
     its checklist. Fix what it finds and re-render the affected chunks (delete them from `out/chunks_*`).
-11. **Deliver** the MP4 and a side-by-side sheet. Say plainly what still falls short.
+12. **Deliver** the MP4 and a side-by-side sheet. Say plainly what still falls short.
 
 ## Kit map (`studio/src/stage/`)
 

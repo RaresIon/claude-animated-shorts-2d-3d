@@ -5,7 +5,7 @@ import { box, card, cloud, cyl, group, hill, inked, lit, put } from "./props";
 import { cobbles, dirt, grass, planks, plaster, stoneBlocks, tiles } from "./paint";
 import { ctex, shade } from "./util";
 
-const ground = (w: number, d: number, tex: THREE.Texture) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), lit(tex)); return m; };
+const ground = (w: number, d: number, tex: THREE.Texture) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), lit(tex)); m.receiveShadow = true; return m; };
 
 /** interior: floor, three walls with baseboard and picture rail, ceiling beams. Origin at the floor centre. */
 export const room = (o: { w?: number; d?: number; h?: number; wall?: string; floor?: THREE.Texture; dado?: string } = {}) => {
@@ -14,7 +14,7 @@ export const room = (o: { w?: number; d?: number; h?: number; wall?: string; flo
   const wt = plaster(wall, [w / 3, h / 3]);
   const walls: [number, number, number, number][] = [[0, -d / 2, w, 0], [-w / 2, 0, d, Math.PI / 2], [w / 2, 0, d, -Math.PI / 2]];
   for (const [x, z, len, ry] of walls) {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(len, h).translate(0, h / 2, 0), lit(wt)); put(p, x, 0, z, ry); g.add(p);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(len, h).translate(0, h / 2, 0), lit(wt)); p.receiveShadow = true; put(p, x, 0, z, ry); g.add(p);
     g.add(put(box(len, 1.0, 0.06, planks(dado, 8, true, [len / 1.2, 1])), x, 0, z, ry), put(box(len, 0.1, 0.1, shade(dado, 1.2)), x, 1.0, z, ry), put(box(len, 0.16, 0.1, shade(dado, 0.8)), x, 0, z, ry), put(box(len, 0.1, 0.08, shade(dado, 1.1)), x, h - 0.6, z, ry));
   }
   for (let i = -1; i <= 1; i++) g.add(put(box(0.22, 0.22, d, shade(dado, 0.85), false), i * (w / 3), h - 0.22, 0));
