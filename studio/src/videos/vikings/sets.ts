@@ -47,7 +47,7 @@ export const TEX = {
 
 // ---------------------------------------------------------------- one water set, many shores
 type Kind = "harbour" | "fog" | "forest" | "flat" | "rocky" | "greenland";
-const GROUND: Record<Exclude<Kind, "fog">, () => THREE.Texture> = { greenland: () => dirt("#cfd9e0", [1, 1]), rocky: () => dirt("#8f8a86", [1, 1]), harbour: () => grass("#7a9a58", [1, 1]), forest: () => sand("#e6d3a0", [1, 1]), flat: () => sand("#efe0b4", [1, 1]) };
+const GROUND: Record<Exclude<Kind, "fog">, () => THREE.Texture> = { greenland: () => dirt("#cfd9e0", [1, 1]), rocky: () => sand("#cfc4b0", [1, 1]), harbour: () => grass("#7a9a58", [1, 1]), forest: () => sand("#e6d3a0", [1, 1]), flat: () => sand("#efe0b4", [1, 1]) };
 /** a stretch of coast from x0 to x1: beach, what grows or stands behind it, and the hills or ice on the horizon */
 const shoreBand = (kind: Exclude<Kind, "fog">, x0: number, x1: number, seed: number) => {
   const g = group(), r = rng(seed), w = x1 - x0, cx = (x0 + x1) / 2, rx = () => x0 + r() * w, clear = (x: number) => Math.abs(x - cx) < 5 ? x + (x < cx ? -5 : 5) : x;
@@ -63,7 +63,7 @@ const shoreBand = (kind: Exclude<Kind, "fog">, x0: number, x1: number, seed: num
     for (let i = 0; i < Math.round(w / 9); i++) g.add(put(P.bush(0.6 + r() * 0.5, "#4f8a48", i), rx(), 0.09, -SHORE - 5.2 - r() * 1.5));
   }
   if (kind === "rocky") {
-    for (let i = 0; i < Math.round(w / 5); i++) g.add(put(P.rock(0.6 + r() * 1.6, i % 3 ? "#8a8590" : "#6f6a78", i), rx(), 0.06, -SHORE - 2.5 - r() * 16));
+    for (let i = 0; i < Math.round(w / 5); i++) g.add(put(P.rock(0.6 + r() * 1.6, i % 3 ? "#8a8590" : "#6f6a78", i), rx(), 0.06, -SHORE - 6.5 - r() * 14));
     for (let i = 0; i < Math.round(w / 12); i++) g.add(put(P.glacier(12, 10 + r() * 7, i + 20, ["#7f7a88", "#959099", "#8a8590", "#e6eef2"]), x0 + 6 + i * 12, 0, -SHORE - 20 - r() * 6)); // grey peaks, a little snow
   }
   if (kind === "greenland") {

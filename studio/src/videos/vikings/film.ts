@@ -137,16 +137,16 @@ const s7 = (f: number): CastItem[] => {
 //    a number on each, Bjarni pointing on. Then the camera tips over the side to the beach: smooth sand, and a zero.
 const s8cam = (f: number): Cam => track(f, [
   { f: T.times, cam: { pos: [2.6, 2.9, 5.6], look: [0.4, 2.0, -2], fov: 46, roll: 0.07 }, rate: 0.003 },
-  { f: F("zero", 0, -6), cam: { pos: [0.9, 3.1, -SHORE + 2.2], look: [0.9, 0.2, -SHORE - 2.6], fov: 44, roll: -0.07 }, dur: 12 },
+  { f: F("coasts", 0, 2), cam: { pos: [0.9, 2.5, -SHORE + 1.6], look: [0.9, 0.6, -SHORE - 2.8], fov: 44, roll: -0.07 }, dur: 10 },
 ]);
 const s8 = (f: number): CastItem[] => {
-  const z = F("zero", 0, -6), n2 = T.times + 5, n3 = T.third + 6;
+  const z = F("coasts", 0, 2), n2 = T.times + 5, n3 = T.third + 6;
   return [
     person("bjarni", BJARNI, onDeck("run", f, 2.0), { eyes: "angry", mouth: "frown", brow: 1, face: 0.6, rh: [1.1, -0.5], lh: [-0.4, 1.0], squash: pop(f, n2) * pop(f, n3) }, f, 1, 1.66),
     ...crew("run", f, (i) => ({ eyes: "lid", mouth: "frown", face: -0.6, look: [-0.8, 0.2], rh: [0.3, 1.1], lh: [-0.9, -0.6 - 0.1 * wave(f + i * 4, 0.5)], tilt: 0.1 })),
     fx("n2", TEX.num("2"), [2.9, 3.5, 0.9], 1.2 * overshoot(prog(f, n2, 7)), 1.2 * overshoot(prog(f, n2, 7)), f >= n2 && f < T.third - 6 ? 1 : 0),
     fx("n3", TEX.num("3"), [2.9, 3.5, 0.9], 1.2 * overshoot(prog(f, n3, 7)), 1.2 * overshoot(prog(f, n3, 7)), f >= n3 && f < z ? 1 : 0),
-    fx("zero", TEX.num("0"), [0.9, 0.3, -SHORE - 2.6], 1.4 * overshoot(prog(f, F("zero", 0, -2), 7)), 1.3 * overshoot(prog(f, F("zero", 0, -2), 7)), f >= F("zero", 0, -2) ? 1 : 0),
+    fx("zero", TEX.num("0"), [0.9, 0.35, -SHORE - 2.8], 1.5 * overshoot(prog(f, F("zero", 0, -3), 7)), 1.5 * overshoot(prog(f, F("zero", 0, -3), 7)), f >= F("zero", 0, -3) ? 1 : 0),
   ];
 };
 
