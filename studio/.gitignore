@@ -5,3 +5,5 @@ audio/voice24.wav
 audio/*.log
 audio/*.onnx
 audio/*.bin
+audio/voice_v1.wav
+audio/*.raw
