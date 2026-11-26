@@ -1,0 +1,77 @@
+# Cue sheet (frame @30 fps, time, what)
+
+-    0    0.00 s  bow wave (bed)
+-    0    0.00 s  the crew: land!
+-    2    0.07 s  hull creak
+-   47    1.57 s  camera up
+-   53    1.77 s  crew groan
+-   82    2.73 s  ship swings away
+-   94    3.13 s  Bjarni's boots (bed)
+-   94    3.13 s  harbour birds (bed)
+-  243    8.10 s  knock
+-  248    8.27 s  knock
+-  253    8.43 s  knock
+-  270    9.00 s  the note
+-  272    9.07 s  gasp
+-  301   10.03 s  to the signpost
+-  331   11.03 s  ?
+-  353   11.77 s  to the ship
+-  355   11.83 s  water at the dock (bed)
+-  358   11.93 s  no map
+-  372   12.40 s  no compass
+-  390   13.00 s  confidence
+-  419   13.97 s  ding
+-  424   14.13 s  heavy sea (bed)
+-  424   14.13 s  rigging (bed)
+-  424   14.13 s  wind in the fog (bed)
+-  448   14.93 s  ?
+-  470   15.67 s  the wind takes them
+-  503   16.77 s  whoa
+-  533   17.77 s  calm sea (bed)
+-  533   17.77 s  shore birds (bed)
+-  551   18.37 s  over their heads
+-  559   18.63 s  land!
+-  563   18.77 s  cheer
+-  678   22.60 s  to Bjarni
+-  716   23.87 s  no
+-  739   24.63 s  not
+-  760   25.33 s  keep sailing
+-  765   25.50 s  groan
+-  779   25.97 s  sea (bed)
+-  784   26.13 s  2
+-  818   27.27 s  3
+-  849   28.30 s  0
+-  878   29.27 s  cold wind (bed)
+-  878   29.27 s  ship comes in (bed)
+-  906   30.20 s  to the door
+-  927   30.90 s  bump
+-  927   30.90 s  creak
+-  930   31.00 s  Dad
+-  966   32.20 s  home
+-  997   33.23 s  fire (bed)
+- 1026   34.20 s  slurp
+- 1051   35.03 s  ladle
+- 1066   35.53 s  gulp
+- 1079   35.97 s  dock (bed)
+- 1120   37.33 s  Leif
+- 1126   37.53 s  sold
+- 1132   37.73 s  ka-ching
+- 1165   38.83 s  under sail (bed)
+- 1170   39.00 s  3
+- 1181   39.37 s  2
+- 1192   39.73 s  1
+- 1211   40.37 s  boots on sand (bed)
+- 1211   40.37 s  surf (bed)
+- 1215   40.50 s  footprint
+- 1221   40.70 s  footprint
+- 1227   40.90 s  footprint
+- 1233   41.10 s  footprint
+- 1239   41.30 s  footprint
+- 1245   41.50 s  footprint
+- 1257   41.90 s  up
+- 1261   42.03 s  Vinland!
+- 1262   42.07 s  campfire (bed)
+- 1311   43.70 s  fire (bed)
+- 1327   44.23 s  slurp
+- 1350   45.00 s  slurp
+- 1392   46.40 s  the last word

@@ -91,6 +91,14 @@ export const dirt = (base = "#b8824e", rep?: [number, number]) =>
     for (let i = 0; i < 50; i++) { g.fillStyle = shade(base, 0.6); g.beginPath(); g.arc(r() * 512, r() * 512, 2 + r() * 3, 0, 7); g.fill(); }
   }, rep);
 
+export const sand = (base = "#e6d3a0", rep?: [number, number]) =>
+  ctex(`sand${base}`, 512, 512, (g, r) => {
+    g.fillStyle = base; g.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 60; i++) { g.fillStyle = shade(base, 0.94 + r() * 0.1) + "88"; g.beginPath(); g.ellipse(r() * 512, r() * 512, 30 + r() * 60, 8 + r() * 14, 0, 0, 7); g.fill(); }
+    g.strokeStyle = shade(base, 0.86); g.lineWidth = 3; g.lineCap = "round"; // wind ripples, no dimples
+    for (let i = 0; i < 40; i++) { const x = r() * 512, y = r() * 512, w = 40 + r() * 70; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y - 6, x + w, y); g.stroke(); }
+  }, rep);
+
 export const grass = (base = "#7fb24a", rep?: [number, number]) =>
   ctex(`grass${base}`, 512, 512, (g, r) => {
     g.fillStyle = base; g.fillRect(0, 0, 512, 512);

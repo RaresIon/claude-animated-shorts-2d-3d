@@ -6,10 +6,10 @@ import * as THREE from "three";
 import { AbsoluteFill, continueRender, delayRender, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
 import { useThree } from "@react-three/fiber";
-import { Cam, whip } from "./camera";
+import { Cam, drift, mixCam, whip } from "./camera";
 import { MOODS, Mood, MoodName } from "./moods";
 import { Look, PH, PW, Pose, RH, RW, Rat, drawPerson, drawRat } from "./chars";
-import { V3, ctex } from "./util";
+import { V3, burst, ctex } from "./util";
 import { blob } from "./paint";
 import { Captions, Word } from "./Captions";
 
@@ -22,9 +22,34 @@ export type Shot = {
   a: number; b: number; set: string; mood: MoodName;
   cam: (f: number) => Cam;
   cast?: (f: number) => CastItem[];
-  into?: "cut" | "whip" | "dip" | "flash"; // how this shot is entered (default cut)
+  /** how this shot is entered. The reference never hard-cuts: use "dissolve" (8-frame cross-dissolve) for a new place
+   *  or time, "move" (the camera travels from the previous framing in one burst; same set only), rarely "dip"/"flash". */
+  into?: "dissolve" | "move" | "dip" | "flash" | "whip" | "cut";
+  tag?: "insert" | "wide";           // for plan_lint: a deliberate prop insert or far wide
 };
-export type Film = { total: number; sets: Record<string, () => SetDef>; shots: Shot[]; words: Word[]; captions?: boolean };
+/** Time warp: shots are authored on one timeline (`from` frames); when the voice is re-recorded, give the new frame
+ *  of each anchor in `to` and the whole film follows without touching a shot. Piecewise linear. */
+export type Warp = { from: number[]; to: number[] };
+export type Film = { total: number; sets: Record<string, () => SetDef>; shots: Shot[]; words: Word[]; captions?: boolean; warp?: Warp };
+export const DISSOLVE = 8;
+/** the real output frame being drawn (shot functions receive the authoring frame; spoken-line mouth flaps need the real one) */
+export const clock = { real: 0 };
+/** real frame -> authoring frame */
+export const unwarp = (w: Warp | undefined, f: number) => {
+  if (!w) return f;
+  const n = w.to.length; if (f <= w.to[0]) return w.from[0] + (f - w.to[0]); if (f >= w.to[n - 1]) return w.from[n - 1] + (f - w.to[n - 1]);
+  let i = 0; while (i < n - 2 && f >= w.to[i + 1]) i++;
+  return w.from[i] + ((f - w.to[i]) / (w.to[i + 1] - w.to[i])) * (w.from[i + 1] - w.from[i]);
+};
+/** authoring frame -> real frame */
+export const warpTo = (w: Warp | undefined, f: number) => (w ? unwarp({ from: w.to, to: w.from }, f) : f);
+/** which shots are on screen at authoring frame f, with opacity (two during a dissolve) */
+export const layersAt = (film: Film, f: number): { i: number; alpha: number }[] => {
+  const s = film.shots;
+  for (let i = 1; i < s.length; i++) if (s[i].into === "dissolve" && f >= s[i].a - DISSOLVE / 2 && f < s[i].a + DISSOLVE / 2) return [{ i: i - 1, alpha: 1 }, { i, alpha: (f - (s[i].a - DISSOLVE / 2) + 0.5) / DISSOLVE }];
+  const i = s.findIndex((x) => f >= x.a && f < x.b);
+  return [{ i: i < 0 ? (f < s[0].a ? 0 : s.length - 1) : i, alpha: 1 }];
+};
 
 const skyTex = (m: Mood, key: string) => ctex(`sky${key}`, 16, 512, (g) => {
   const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, m.sky[0]); gr.addColorStop(0.5, m.sky[1]); gr.addColorStop(0.78, m.sky[2]); gr.addColorStop(1, m.sky[2]);
@@ -32,6 +57,7 @@ const skyTex = (m: Mood, key: string) => ctex(`sky${key}`, 16, 512, (g) => {
   if (m.stars) { g.fillStyle = "#ffffff"; for (let i = 0; i < 26; i++) g.fillRect((i * 7.3) % 16, (i * 37.7) % 300, 1, 1); }
 });
 
+const RES = 2; // cast canvases are drawn at 2x so close-ups and inserts stay crisp
 type Card = { mesh: THREE.Mesh; sh: THREE.Mesh; canvas?: HTMLCanvasElement; tex?: THREE.CanvasTexture; key: string };
 class Engine {
   sets = new Map<string, SetDef>();
@@ -58,7 +84,7 @@ class Engine {
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); mesh.renderOrder = 5;
       const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: blob("#120a1c"), transparent: true, depthWrite: false, opacity: 0.5 })); sh.renderOrder = 3;
       c = { mesh, sh, key: "" };
-      if (kind === "person") { c.canvas = document.createElement("canvas"); c.canvas.width = PW; c.canvas.height = PH; c.tex = new THREE.CanvasTexture(c.canvas); c.tex.colorSpace = THREE.SRGBColorSpace; c.tex.anisotropy = 4; mat.map = c.tex; }
+      if (kind === "person") { c.canvas = document.createElement("canvas"); c.canvas.width = PW * RES; c.canvas.height = PH * RES; c.tex = new THREE.CanvasTexture(c.canvas); c.tex.colorSpace = THREE.SRGBColorSpace; c.tex.anisotropy = 4; mat.map = c.tex; }
       this.castRoot.add(mesh, sh); this.cards.set(id, c);
     }
     return c;
@@ -66,59 +92,68 @@ class Engine {
   private rat(r: Rat) {
     const q = { ...r, phase: Math.round((((r.phase ?? 0) % (Math.PI * 2)) + Math.PI * 2) / (Math.PI / 4)) % 8 * (Math.PI / 4) }, k = JSON.stringify(q);
     let t = this.ratTex.get(k);
-    if (!t) { const c = document.createElement("canvas"); c.width = RW; c.height = RH; drawRat(c.getContext("2d")!, q); t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.ratTex.set(k, t); }
+    if (!t) { const c = document.createElement("canvas"); c.width = RW * RES; c.height = RH * RES; const g = c.getContext("2d")!; g.scale(RES, RES); drawRat(g, q); t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.ratTex.set(k, t); }
     return t;
   }
-  update(f: number, cam: THREE.PerspectiveCamera, aspect: number) {
-    const shots = this.film.shots, i = Math.max(0, shots.findIndex((s) => f >= s.a && f < s.b)), shot = shots[i] ?? shots[shots.length - 1], next = shots[i + 1];
+  update(f0: number, cam: THREE.PerspectiveCamera, aspect: number, i: number) {
+    const shots = this.film.shots, shot = shots[i], next = shots[i + 1];
+    const f = Math.max(shot.a, Math.min(shot.b - 0.001, f0)); // during a dissolve a shot is held at its own first / last frame
     const set = this.set(shot.set); set.tick?.(f);
     const m: Mood = MOODS[shot.mood];
     this.amb.color.set(m.amb[0]); this.amb.intensity = m.amb[1];
     this.sun.color.set(m.key[0]); this.sun.intensity = m.key[1];
     this.scene.background = skyTex(m, shot.mood); this.fog.color.set(m.fog[0]); this.fog.near = m.fog[1]; this.fog.far = m.fog[2];
     // camera
-    const c = shot.cam(f), yaw = whip(f, shot.a, shot.b, shot.into === "whip", next?.into === "whip");
+    let c = shot.cam(f); const yaw = whip(f, shot.a, shot.b, shot.into === "whip", next?.into === "whip");
+    if (shot.into === "move" && i > 0 && f < shot.a + 14) c = mixCam(shots[i - 1].cam(shot.a - 1), c, burst((f - shot.a + 1) / 14)); // travel in from the previous framing
+    c = drift(c, f); // the camera never fully stops
     cam.position.set(...c.pos); cam.fov = c.fov ?? 40; cam.aspect = aspect; cam.near = 0.1; cam.far = 400; cam.up.set(0, 1, 0);
-    cam.lookAt(c.look[0], c.look[1], c.look[2]); cam.rotateY(-yaw); cam.rotateZ(c.roll ?? 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    cam.lookAt(c.look[0], c.look[1], c.look[2]); cam.rotateY(-yaw);
+    // cards face the lens (before the dutch roll); their tilt is capped at 35 degrees so a card seen from a steep
+    // angle does not lean back through the furniture behind it
+    const fe = new THREE.Euler().setFromQuaternion(cam.quaternion, "YXZ"); fe.x = Math.max(-0.6, Math.min(0.6, fe.x)); fe.z = 0;
+    const face = new THREE.Quaternion().setFromEuler(fe), up = new THREE.Vector3(0, 1, 0).applyQuaternion(face);
+    cam.rotateZ(c.roll ?? 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     const kd = new THREE.Vector3(...m.key[2]).normalize().multiplyScalar(30);
     this.sun.target.position.set(c.look[0], 0, c.look[2]); this.sun.position.set(c.look[0] + kd.x, kd.y, c.look[2] + kd.z); this.sun.target.updateMatrixWorld();
     // cast
     for (const v of this.cards.values()) { v.mesh.visible = false; v.sh.visible = false; }
-    const camYaw = Math.atan2(cam.position.x - c.look[0], cam.position.z - c.look[2]);
     for (const it of shot.cast?.(f) ?? []) {
       const cd = this.card(it.id, it.kind), mat = cd.mesh.material as THREE.MeshBasicMaterial;
       cd.mesh.visible = true; mat.color.set(m.cast); mat.blending = THREE.NormalBlending; mat.opacity = 1;
       let w = 1, h = 1, y0 = 0;
       if (it.kind === "person") {
         const key = JSON.stringify([it.look, it.pose]);
-        if (key !== cd.key) { drawPerson(cd.canvas!.getContext("2d")!, it.look, it.pose); cd.tex!.needsUpdate = true; cd.key = key; }
+        if (key !== cd.key) { const g = cd.canvas!.getContext("2d")!; g.setTransform(RES, 0, 0, RES, 0, 0); drawPerson(g, it.look, it.pose); cd.tex!.needsUpdate = true; cd.key = key; }
         h = (it.h ?? 1.7) * (PH / 580); w = h * (PW / PH); y0 = -h * (20 / PH);
-        cd.mesh.rotation.set(0, camYaw, 0);
+        cd.mesh.quaternion.copy(face);
       } else if (it.kind === "rat") {
         mat.map = this.rat(it.rat); h = 0.42 * (it.s ?? 1); w = h * (RW / RH); y0 = -h * (20 / RH);
-        cd.mesh.rotation.set(0, camYaw, 0); cd.mesh.rotateZ(it.roll ?? 0);
+        cd.mesh.quaternion.copy(face); cd.mesh.rotateZ(it.roll ?? 0);
       } else {
         mat.map = it.tex; w = it.w; h = it.h; mat.opacity = it.opacity ?? 1; mat.blending = it.add ? THREE.AdditiveBlending : THREE.NormalBlending; if (it.add) mat.color.set("#ffffff");
-        if (it.flat) cd.mesh.rotation.set(-Math.PI / 2, 0, it.roll ?? 0); else { cd.mesh.rotation.set(0, camYaw, 0); cd.mesh.rotateZ(it.roll ?? 0); }
+        if (it.flat) cd.mesh.rotation.set(-Math.PI / 2, 0, it.roll ?? 0); else { cd.mesh.quaternion.copy(face); cd.mesh.rotateZ(it.roll ?? 0); }
         y0 = it.flat ? 0 : -h / 2 + 0;
       }
       mat.needsUpdate = false;
       const flip = (it.kind !== "card" && it.flip) ? -1 : 1;
       cd.mesh.scale.set(w * flip, h, 1);
-      cd.mesh.position.set(it.at[0], it.at[1] + (it.kind === "card" && it.flat ? 0 : h / 2 + y0), it.at[2]);
+      const lift = it.kind === "card" && it.flat ? 0 : h / 2 + y0; // the card's foot stays on its spot whatever the camera pitch
+      cd.mesh.position.set(it.at[0] + up.x * lift, it.at[1] + up.y * lift, it.at[2] + up.z * lift);
       if (it.kind !== "card" && it.shadow !== false) { cd.sh.visible = true; cd.sh.position.set(it.at[0], 0.02, it.at[2]); cd.sh.scale.set(w * 0.8, 1, w * 0.42); }
     }
     return m;
   }
 }
 
-const Inner: React.FC<{ film: Film }> = ({ film }) => {
-  const f = useCurrentFrame();
+const Inner: React.FC<{ film: Film; shot: number }> = ({ film, shot }) => {
+  const real = useCurrentFrame(), f = unwarp(film.warp, real);
+  clock.real = real;
   const { width, height } = useVideoConfig();
   const { camera, scene, gl } = useThree();
   gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap;
   const engine = useMemo(() => new Engine(film, scene), [film, scene]);
-  engine.update(f, camera as THREE.PerspectiveCamera, width / height);
+  engine.update(f, camera as THREE.PerspectiveCamera, width / height, shot);
   return null;
 };
 
@@ -133,11 +168,11 @@ const useFonts = () => {
 };
 
 export const Stage: React.FC<{ film: Film }> = ({ film }) => {
-  const f = useCurrentFrame();
+  const f = unwarp(film.warp, useCurrentFrame());
   const { width, height } = useVideoConfig();
   const ok = useFonts();
   if (!ok) return null;
-  const i = Math.max(0, film.shots.findIndex((s) => f >= s.a && f < s.b)), shot = film.shots[i], next = film.shots[i + 1], m: Mood = MOODS[shot.mood];
+  const layers = layersAt(film, f), i = layers[layers.length - 1].alpha >= 0.5 ? layers[layers.length - 1].i : layers[0].i, shot = film.shots[i], next = film.shots[i + 1], m: Mood = MOODS[shot.mood];
   // transition overlays: 4-frame white flash or a 6-frame dip through black, split across the boundary
   let over = 0, col = "#fff";
   if (shot.into === "flash" && f < shot.a + 4) over = 1 - (f - shot.a) / 4;
@@ -146,11 +181,13 @@ export const Stage: React.FC<{ film: Film }> = ({ film }) => {
   const whipping = (shot.into === "whip" && f < shot.a + 3) || (next?.into === "whip" && f >= shot.b - 3);
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      <AbsoluteFill style={{ filter: m.css + (whipping ? " blur(7px)" : "") }}>
-        <ThreeCanvas width={width} height={height} flat shadows gl={{ antialias: true }} camera={{ fov: 40, near: 0.1, far: 400 }}>
-          <Inner film={film} />
-        </ThreeCanvas>
-      </AbsoluteFill>
+      {layers.map((l, k) => (
+        <AbsoluteFill key={k} style={{ filter: MOODS[film.shots[l.i].mood].css + (whipping ? " blur(7px)" : ""), opacity: l.alpha }}>
+          <ThreeCanvas width={width} height={height} flat shadows gl={{ antialias: true }} camera={{ fov: 40, near: 0.1, far: 400 }}>
+            <Inner film={film} shot={l.i} />
+          </ThreeCanvas>
+        </AbsoluteFill>
+      ))}
       <AbsoluteFill style={{ background: `radial-gradient(ellipse 85% 75% at 50% 46%, rgba(0,0,0,0) 55%, rgba(12,6,24,${m.vignette}) 100%)` }} />
       {over > 0 ? <AbsoluteFill style={{ background: col, opacity: over }} /> : null}
       {film.captions === false ? null : <Captions words={film.words} />}

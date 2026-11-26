@@ -1,7 +1,6 @@
 node_modules
 out
-audio/mix.wav
-audio/voice24.wav
-audio/*.log
+audio/*/mix.wav
+audio/*/voice24.wav
 audio/*.onnx
 audio/*.bin

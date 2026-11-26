@@ -1,16 +1,21 @@
 """Sound for "The Rat Tail Problem": original sneaky-pizzicato score + CC0 effects (audio/sfx, see fetch_sfx.py) +
 the mix under the voice. Every cue is a picture frame from src/videos/rat-tails/film.ts, so effects land on the pose
-change they belong to. Run: python3 audio/make.py  ->  audio/mix.wav (48 kHz stereo, exact film length, -14 LUFS)."""
+change they belong to. Run: python3 audio/rat-tails/make.py  ->  audio/rat-tails/mix.wav (48 kHz stereo, exact film length, -14 LUFS)."""
 import os, sys, numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "templates", "audio"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "templates", "audio"))
 from dsp import SR, ns, rng, dbg, lp, hp, pan, st, place, fades, make_ir, convolve_st, integrated, momentary_max, read_wav, write_wav, true_peak
 import instruments as I
 import sfx_gen as G
 
-FPS, TOTAL = 30, 1335
+import json
+FPS = 30
+# Cue frames below are on the authoring timeline of film.ts; warp.json (written by scripts/plan_lint.ts) maps them
+# onto the current voice, so a re-recorded narration moves every cue with the picture.
+WARP = json.load(open(os.path.join(HERE, "warp.json")))
+TOTAL = WARP["to"][-1]
 N = ns(TOTAL / FPS)
-fr = lambda f: f / FPS
+fr = lambda f: float(np.interp(f, WARP["from"], WARP["to"])) / FPS
 F = I.m2f
 R = rng(1902)
 rr = lambda: rng(int(R.integers(1 << 30)))
@@ -86,7 +91,7 @@ voice = st(read_wav(os.path.join(HERE, "voice.wav"))[0])
 VREF = integrated(voice)
 sfx = np.zeros((2, N)); cues = []
 def load(name):
-    x = read_wav(os.path.join(HERE, "sfx", name + ".wav"))[0]; return st(x)
+    x = read_wav(os.path.join(HERE, "..", "sfx", name + ".wav"))[0]; return st(x)
 def ev(f, x, lu, name, p=0.0, speed=1.0):
     """place an effect at frame f so its loudest moment sits `lu` LU relative to the voice"""
     x = load(x) if isinstance(x, str) else (st(x) if np.ndim(x) == 2 else pan(x, p))
@@ -115,7 +120,7 @@ def scurry(dur, r, dens=40):
     return x
 # 1 hook
 bed(0, 169, st(lp(rr().standard_normal(ns(6)), 300)) , -34, "room tone")
-ev(22, "thud", -12, "rat lands on the desk", -0.2); ev(31, "coin", -10, "coin handed over", 0.2); ev(40, "ding", -16, "desk bell")
+ev(0, G.whoosh(0.3, rr(), 0.12, 300, 2000), -10, "rat swings down"); ev(10, "thud", -6, "rat slams on the desk", -0.2); ev(10, "splat", -12, "splat", -0.2); ev(31, "coin", -10, "coin handed over", 0.2); ev(40, "ding", -16, "desk bell")
 ev(112, "whoosh", -9, "pull back"); ev(114, "gasp", -8, "official gasps", 0.3); bed(114, 169, "squeaks", -13, "rats everywhere"); bed(114, 169, scurry(2, rr()), -18, "claws on wood")
 for k in range(6): ev(116 + k * 5, "squeak1", -12 - k, "squeak", -0.6 + k * 0.25, 0.9 + 0.08 * k)
 # 2 ceremony
@@ -123,19 +128,18 @@ bed(169, 268, G.bird_chirps(3.4, rr(), 0.6), -24, "street birds"); ev(224, "snip
 # 3-4 sewer
 ev(266, G.whoosh(0.5, rr(), 0.3, 200, 1200), -8, "down the manhole"); bed(268, 522, drips(8.5, rr()), -20, "sewer drips"); bed(272, 385, scurry(3.9, rr(), 30), -17, "rat traffic"); bed(272, 385, "squeaks", -19, "rat chatter")
 for k, f in enumerate([290, 318, 346, 372]): ev(f, "squeak1", -14, "passing squeak", [-0.5, 0.5, -0.3, 0.4][k], [1.0, 1.15, 0.9, 1.05][k])
-ev(383, "whoosh", -11, "whip"); ev(411, G.whoosh(0.3, rr(), 0.15, 500, 3000), -9, "net swing", 0.2); ev(418, "squeak2", -10, "caught", 0.2, 1.2)
+ev(336, "squeak2", -9, "the boss", 0.2, 0.7); ev(384, "whoosh", -14, "camera travels"); ev(411, G.whoosh(0.3, rr(), 0.15, 500, 3000), -9, "net swing", 0.2); ev(418, "squeak2", -10, "caught", 0.2, 1.2)
 ev(452, "ding", -10, "tally board"); ev(497, "whoosh", -10, "rats rush"); bed(497, 522, scurry(1, rr(), 70), -11, "stampede over the catcher"); bed(497, 522, "squeaks", -12, "squeaks"); ev(499, "boing", -13, "rat on head", 0.0)
 # 5 new plan
-ev(520, "whoosh", -12, "dip"); bed(522, 621, G.bird_chirps(3.3, rr(), 0.5), -25, "street birds"); ev(524, "paper", -13, "poster"); ev(548, "pop", -8, "idea!"); ev(566, "pop", -9, "tail up", 0.2, 0.8); ev(596, "coin", -8, "one cent", 0.2); ev(598, "ding", -15, "ka-ching")
+bed(522, 621, G.bird_chirps(3.3, rr(), 0.5), -25, "street birds"); ev(524, "paper", -13, "poster"); ev(548, "pop", -8, "idea!"); ev(566, "pop", -9, "tail up", 0.2, 0.8); ev(598, "coin", -8, "one cent", 0.2); ev(600, "ding", -15, "ka-ching")
 # 6 tails pour in
-ev(619, "whoosh", -11, "whip")
 for k in range(4): ev(621 + k * 22 + 6, "splat", -13, "tails on the pile", -0.2, 0.8); ev(621 + k * 22 + 10, "coin", -11, "paid", 0.3, 1 + 0.05 * k); ev(621 + k * 22 + 16, "stamp", -13, "stamp", 0.3)
 ev(690, "ding", -11, "thrilled")
 # 7 something odd
-ev(714, "whoosh", -11, "whip"); bed(716, 760, steps(1.5, 3.2, rr()), -15, "official strolls"); bed(716, 830, G.bird_chirps(3.8, rr(), 0.3), -27, "evening birds"); ev(762, "pop", -10, "?"); ev(783, "whoosh", -10, "camera drops"); ev(786, "gasp", -8, "gasp", 0.2)
+bed(716, 760, steps(1.5, 3.2, rr()), -15, "official strolls"); bed(716, 830, G.bird_chirps(3.8, rr(), 0.3), -27, "evening birds"); ev(762, "pop", -10, "?"); ev(783, "whoosh", -10, "camera drops"); ev(786, "gasp", -8, "gasp", 0.2)
 for k, f in enumerate([790, 800, 812, 822]): ev(f, "squeak1", -10, "smug squeak", -0.5 + k * 0.3, 0.85 + 0.07 * k)
 # 8 you see
-ev(828, G.whoosh(0.4, rr(), 0.2, 300, 1500), -12, "dip"); ev(866, "coin", -9, "= one cent", -0.3); ev(866, "pop", -11, "pop")
+ev(866, "coin", -9, "= one cent", -0.3); ev(866, "pop", -11, "pop")
 bed(894, 939, scurry(1.5, rr(), 14), -16, "little feet"); ev(939, "thud", -15, "door", 0.3); ev(941, "kiss", -9, "hearts", 0.3)
 for k in range(11): ev(946 + k * 4.2, "pop", -11 + (k % 3), "a baby rat", 0.3 - k * 0.05, 0.8 + k * 0.05)
 for k in range(5): ev(977 + k * 4, "coin", -13, "tail = coin", -0.3 + k * 0.15, 1.1 + 0.05 * k)
@@ -143,9 +147,9 @@ for k in range(5): ev(977 + k * 4, "coin", -13, "tail = coin", -0.3 + k * 0.15, 
 bed(1013, 1193, "crickets", -24, "evening crickets"); ev(1022, "paper", -14, "bush rustle", -0.4, 0.7); ev(1088, "whoosh", -9, "over the fence"); ev(1092, "gasp", -8, "inspector gasps", -0.3)
 bed(1090, 1193, "squeaks", -12, "hundreds of rats"); bed(1090, 1193, scurry(3.4, rr(), 50), -17, "pen"); ev(1160, "pop", -10, "tails"); ev(1164, "coin", -10, "coin", -0.2)
 # 11 cancelled
-ev(1191, "whoosh", -11, "whip"); ev(1206, G.whoosh(0.25, rr(), 0.18, 400, 2500), -11, "stamp swings"); ev(1212, "stamp", -3, "CANCELLED"); ev(1212, "thud", -5, "stamp hits")
+ev(1206, G.whoosh(0.25, rr(), 0.18, 400, 2500), -11, "stamp swings"); ev(1212, "stamp", -3, "CANCELLED"); ev(1212, "thud", -5, "stamp hits")
 # 12 payoff
-ev(1239, "whoosh", -11, "whip"); bed(1241, 1335, "crickets", -25, "dusk"); bed(1241, 1335, "squeaks", -15, "the street belongs to the rats"); bed(1281, 1335, scurry(1.8, rr(), 60), -16, "rats"); ev(1279, "whoosh", -10, "pull back")
+bed(1241, 1335, "crickets", -25, "dusk"); bed(1241, 1335, "squeaks", -15, "the street belongs to the rats"); bed(1281, 1335, scurry(1.8, rr(), 60), -16, "rats"); ev(1279, "whoosh", -10, "pull back")
 for k in range(3): ev(1290 + k * 5, "pop", -11, "rat on the hat", 0, 1 + 0.1 * k)
 ev(1322, "squeak1", -9, "last word: a squeak", 0.1, 0.9)
 
@@ -162,5 +166,5 @@ for _ in range(4):  # normalise to -14 LUFS, soft-limit the peaks, repeat until 
     c = dbg(-1.5); mix = np.where(np.abs(mix) > c * 0.7, np.sign(mix) * (c * 0.7 + c * 0.3 * np.tanh((np.abs(mix) - c * 0.7) / (c * 0.3))), mix)
 mix[:, -ns(0.05):] *= np.linspace(1, 0, ns(0.05))
 write_wav(os.path.join(HERE, "mix.wav"), mix)
-open(os.path.join(HERE, "cues.md"), "w").write("# Cue sheet (frame @30 fps, time, what)\n\n" + "\n".join(f"- {int(f):4d}  {f / FPS:6.2f} s  {n}" for f, n in sorted(cues)) + "\n")
+open(os.path.join(HERE, "cues.md"), "w").write("# Cue sheet (frame @30 fps, time, what)\n\n" + "\n".join(f"- {int(f):4d}  {fr(f):6.2f} s  {n}" for f, n in sorted(cues)) + "\n")
 print("mix LUFS", round(integrated(mix), 2), "true peak", round(true_peak(mix), 2), "voice", round(VREF, 2), "len", mix.shape[1] / SR)

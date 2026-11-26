@@ -5,8 +5,8 @@ import { G, INK, clamp01, shade } from "./util";
 
 export type Mouth = "dash" | "smirk" | "smile" | "grin" | "open" | "o" | "frown" | "wave" | "teeth";
 export type Eyes = "lid" | "dot" | "wide" | "happy" | "squeeze" | "angry" | "side" | "spiral";
-export type Hat = "none" | "nonla" | "pith" | "kepi" | "topper" | "bandana" | "straw" | "hair";
-export type Held = null | "coin" | "tail" | "rat" | "lantern" | "sack" | "stamp" | "paper" | "magnifier" | "net" | "scissors" | "tails" | "bucket";
+export type Hat = "none" | "nonla" | "pith" | "kepi" | "topper" | "bandana" | "straw" | "hair" | "helmet" | "hood" | "fur";
+export type Held = null | "bowl" | "ladle" | "coin" | "tail" | "rat" | "lantern" | "sack" | "stamp" | "paper" | "magnifier" | "net" | "scissors" | "tails" | "bucket";
 export type Look = {
   coat: string; trim?: string; legs?: string; hat: Hat; hatCol?: string; band?: string; moustache?: boolean | string; monocle?: boolean; glasses?: boolean;
   buttons?: string; sash?: string; collar?: string; apron?: string; stout?: boolean; skin?: string; beard?: string;
@@ -20,12 +20,15 @@ export type Pose = {
   lean?: number; squash?: number;                    // lean in radians; squash: 1 = rest, <1 squashed, >1 stretched
   walk?: number;                                     // walk-cycle phase (radians); undefined = standing
   blink?: boolean; sweat?: boolean; tilt?: number;   // head tilt in radians
+  view?: "front" | "side";                           // side: profile, one eye, facing the sign of `face`
 };
 
 export const PW = 440, PH = 640; // person canvas (design px); soles at y = 620
 export const SKIN = "#fbf5ea";
 const ell = (g: G, x: number, y: number, rx: number, ry: number, rot = 0) => { g.beginPath(); g.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot, 0, Math.PI * 2); };
 const line = (g: G, pts: number[][], w: number, c = INK) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.stroke(); };
+/** a limb: one curved "noodle" stroke through a control point (the reference bends limbs as curves, not joints) */
+const noodle = (g: G, a: number[], c: number[], b: number[], w: number, col = INK) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = "round"; g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(c[0] * 2 - (a[0] + b[0]) / 2, c[1] * 2 - (a[1] + b[1]) / 2, b[0], b[1]); g.stroke(); };
 const inkFill = (g: G, fill: string, w = 9) => { g.fillStyle = fill; g.fill(); g.strokeStyle = INK; g.lineWidth = w; g.lineJoin = "round"; g.stroke(); };
 /** soft crescent form shadow inside the current path */
 const crescent = (g: G, path: () => void, x: number, y: number, rx: number, ry: number, a = 0.16) => {
@@ -47,6 +50,8 @@ const drawHeld = (g: G, k: Held, x: number, y: number, s: number) => {
   if (k === "magnifier") { line(g, [[0, 0], [22 * s, -44]], 11); ell(g, 36 * s, -76, 34, 34); g.fillStyle = "rgba(190,230,245,0.75)"; g.fill(); g.strokeStyle = INK; g.lineWidth = 9; g.stroke(); }
   if (k === "net") { line(g, [[0, 30], [0, -110]], 9, "#6b4a2d"); ell(g, 0, -150, 44, 44); g.fillStyle = "rgba(240,235,220,0.5)"; g.fill(); g.strokeStyle = INK; g.lineWidth = 7; g.stroke(); line(g, [[-30, -150], [30, -150]], 3); line(g, [[0, -180], [0, -120]], 3); }
   if (k === "scissors") { line(g, [[0, 0], [-16, -62]], 8, "#b8c0c8"); line(g, [[0, 0], [16, -62]], 8, "#b8c0c8"); ell(g, -10, 14, 11, 11); g.strokeStyle = INK; g.lineWidth = 6; g.stroke(); ell(g, 10, 14, 11, 11); g.stroke(); }
+  if (k === "bowl") { g.beginPath(); g.moveTo(-34, 0); g.quadraticCurveTo(0, 52, 34, 0); g.closePath(); inkFill(g, "#c9a06a", 7); ell(g, 0, 0, 34, 9); inkFill(g, "#e8c66a", 5); }
+  if (k === "ladle") { line(g, [[0, 20], [0, -70]], 9, "#8a6a4a"); ell(g, 0, -86, 22, 18); inkFill(g, "#8a8590", 6); }
   if (k === "bucket") { g.beginPath(); g.moveTo(-30, 10); g.lineTo(30, 10); g.lineTo(22, 66); g.lineTo(-22, 66); g.closePath(); inkFill(g, "#8a98a8", 7); g.strokeStyle = INK; g.lineWidth = 5; g.beginPath(); g.arc(0, 10, 30, Math.PI, 0); g.stroke(); }
   g.restore();
 };
@@ -59,13 +64,18 @@ const drawHat = (g: G, L: Look, hx: number, hy: number, R: number, f: number) =>
   if (L.hat === "kepi") { g.beginPath(); g.moveTo(hx - R * 0.8, hy - R * 0.55); g.lineTo(hx - R * 0.7, hy - R * 1.3); g.lineTo(hx + R * 0.7, hy - R * 1.3); g.lineTo(hx + R * 0.8, hy - R * 0.55); g.closePath(); inkFill(g, c); line(g, [[hx - R * 0.78, hy - R * 0.68], [hx + R * 0.78, hy - R * 0.68]], 12, L.band ?? "#e2b84a"); g.beginPath(); g.ellipse(hx + f * R * 0.5, hy - R * 0.52, R * 0.7, R * 0.14, 0, 0, Math.PI * 2); inkFill(g, INK, 4); }
   if (L.hat === "topper") { g.beginPath(); g.rect(hx - R * 0.6, hy - R * 1.9, R * 1.2, R * 1.3); inkFill(g, c); ell(g, hx, hy - R * 0.62, R * 1.1, R * 0.16); inkFill(g, c); line(g, [[hx - R * 0.58, hy - R * 0.84], [hx + R * 0.58, hy - R * 0.84]], 12, L.band ?? "#b9483c"); }
   if (L.hat === "bandana") { g.beginPath(); g.ellipse(hx, hy - R * 0.2, R * 1.0, R * 0.82, 0, Math.PI * 1.05, -0.05 * Math.PI); g.closePath(); inkFill(g, c); g.beginPath(); g.moveTo(hx - f * R, hy - R * 0.3); g.lineTo(hx - f * R * 1.4, hy - R * 0.05); g.lineTo(hx - f * R * 1.25, hy - R * 0.5); g.closePath(); inkFill(g, c, 6); }
+  if (L.hat === "helmet") { g.beginPath(); g.ellipse(hx, hy - R * 0.38, R * 1.0, R * 0.82, 0, Math.PI, 0); g.closePath(); inkFill(g, c); line(g, [[hx - R * 1.0, hy - R * 0.4], [hx + R * 1.0, hy - R * 0.4]], 13, L.band ?? "#c9a03a"); line(g, [[hx + f * 6, hy - R * 1.2], [hx + f * 6, hy - R * 0.4]], 9, L.band ?? "#c9a03a"); g.beginPath(); g.rect(hx + f * R * 0.22 - 9, hy - R * 0.4, 18, R * 0.52); inkFill(g, c, 5); for (const s of [-1, 1]) { ell(g, hx + s * R * 0.55, hy - R * 0.4, 6, 6); g.fillStyle = INK; g.fill(); } }
+  if (L.hat === "hood") { g.beginPath(); g.ellipse(hx, hy - R * 0.05, R * 1.12, R * 1.1, 0, Math.PI * 0.88, Math.PI * 0.12); g.quadraticCurveTo(hx + R * 0.7, hy - R * 0.55, hx, hy - R * 0.62); g.quadraticCurveTo(hx - R * 0.7, hy - R * 0.55, hx - R * 1.02, hy + R * 0.38); g.closePath(); inkFill(g, c); }
+  if (L.hat === "fur") { g.beginPath(); g.ellipse(hx, hy - R * 0.55, R * 1.08, R * 0.55, 0, 0, Math.PI * 2); inkFill(g, c); for (let i = -3; i <= 3; i++) line(g, [[hx + i * R * 0.26, hy - R * 0.8], [hx + i * R * 0.28, hy - R * 0.3]], 3.5, shade(c, 0.7)); }
   if (L.hat === "hair") { g.beginPath(); g.ellipse(hx, hy - R * 0.1, R * 1.03, R * 0.98, 0, Math.PI * 1.08, -0.08 * Math.PI); g.quadraticCurveTo(hx, hy - R * 0.45, hx - R * 0.98, hy - R * 0.32); g.closePath(); inkFill(g, c); }
 };
 
 const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => {
-  const f = P.face ?? 0, cx = hx + f * R * 0.24, ey = hy + R * 0.02, dx = R * 0.25, er = R * 0.2;
+  const side = P.view === "side", dir = (P.face ?? 1) >= 0 ? 1 : -1;
+  const f = side ? dir * 1.7 : P.face ?? 0, cx = hx + f * R * 0.24, ey = hy + R * 0.02, dx = R * 0.25, er = R * 0.2;
   const eyes: Eyes = P.blink ? "squeeze" : P.eyes ?? "lid", [lx, ly] = P.look ?? [f * 0.5, 0], brow = P.brow ?? 0;
   for (const s of [-1, 1]) {
+    if (side && s !== dir) continue; // profile: only the near eye
     const x = cx + s * dx;
     if (eyes === "lid" || eyes === "wide" || eyes === "angry" || eyes === "side") {
       ell(g, x, ey, er, eyes === "wide" ? er * 1.18 : er); g.fillStyle = "#ffffff"; g.fill(); g.strokeStyle = INK; g.lineWidth = 5.5; g.stroke();
@@ -79,10 +89,11 @@ const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => 
     const by = ey - er * (1.5 - Math.min(0, brow) * 0.5) + (eyes === "wide" ? -er * 0.2 : 0);
     line(g, [[x - s * er * 0.85, by - brow * er * 0.42 + (brow < 0 ? er * 0.1 : 0)], [x + s * er * 0.6, by + brow * er * 0.1 + (brow < 0 ? -er * 0.12 : 0)]].map(([a, b], i) => [a, i === 1 ? b : b]) , 7.5);
   }
-  if (L.monocle) { ell(g, cx + dx, ey, er * 1.18, er * 1.18); g.strokeStyle = "#c9a03a"; g.lineWidth = 5; g.stroke(); line(g, [[cx + dx + er, ey + er * 0.6], [cx + dx + er * 1.3, ey + R * 0.9]], 2.5, "#c9a03a"); }
-  if (L.glasses) for (const s of [-1, 1]) { ell(g, cx + s * dx, ey, er * 1.15, er * 1.15); g.strokeStyle = INK; g.lineWidth = 5; g.stroke(); }
+  if (L.monocle && (!side || dir > 0)) { ell(g, cx + dx, ey, er * 1.18, er * 1.18); g.strokeStyle = "#c9a03a"; g.lineWidth = 5; g.stroke(); line(g, [[cx + dx + er, ey + er * 0.6], [cx + dx + er * 1.3, ey + R * 0.9]], 2.5, "#c9a03a"); }
+  if (L.glasses) for (const s of side ? [dir] : [-1, 1]) { ell(g, cx + s * dx, ey, er * 1.15, er * 1.15); g.strokeStyle = INK; g.lineWidth = 5; g.stroke(); }
   // mouth
   const mx = cx + f * R * 0.08, my = hy + R * 0.48, m = P.mouth ?? "dash", mw = R * 0.2;
+  if (L.beard) { g.beginPath(); g.moveTo(mx - mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx - mw * 2.0, my + mw * 2.6, mx, my + mw * 3.4); g.quadraticCurveTo(mx + mw * 2.0, my + mw * 2.6, mx + mw * 2.3, my - mw * 0.6); g.quadraticCurveTo(mx, my + mw * 1.3, mx - mw * 2.3, my - mw * 0.6); g.closePath(); inkFill(g, L.beard, 5); }
   g.lineCap = "round";
   if (m === "dash") line(g, [[mx - mw * 0.55, my], [mx + mw * 0.55, my - 2]], 6.5);
   if (m === "smirk") line(g, [[mx - mw * 0.6, my + 3], [mx + mw * 0.2, my + 3], [mx + mw * 0.75, my - 9]], 6.5);
@@ -93,7 +104,6 @@ const drawFace = (g: G, L: Look, P: Pose, hx: number, hy: number, R: number) => 
   if (m === "open") { g.beginPath(); g.ellipse(mx, my - 3, mw * 0.85, mw * 0.8, 0, 0, Math.PI); g.closePath(); inkFill(g, "#5a1e28", 5.5); g.save(); g.beginPath(); g.ellipse(mx, my - 3, mw * 0.85, mw * 0.8, 0, 0, Math.PI); g.clip(); ell(g, mx, my + mw * 0.7, mw * 0.6, mw * 0.4); g.fillStyle = "#e86e78"; g.fill(); g.restore(); }
   if (m === "grin" || m === "teeth") { g.beginPath(); if (m === "grin") { g.ellipse(mx, my - 6, mw * 1.25, mw * 1.0, 0, 0, Math.PI); g.closePath(); } else g.roundRect(mx - mw * 1.1, my - mw * 0.5, mw * 2.2, mw, 8); inkFill(g, "#ffffff", 5.5); g.strokeStyle = INK; g.lineWidth = 3.5; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(mx + i * mw * 0.55, my - mw * 0.5); g.lineTo(mx + i * mw * 0.55, my + mw * 0.9); g.stroke(); } if (m === "teeth") line(g, [[mx - mw * 1.1, my], [mx + mw * 1.1, my]], 3.5); }
   if (L.moustache) { g.fillStyle = typeof L.moustache === "string" ? L.moustache : "#5a3a24"; g.strokeStyle = INK; g.lineWidth = 4; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(mx, my - mw * 0.75); g.quadraticCurveTo(mx + s * mw * 1.2, my - mw * 1.3, mx + s * mw * 1.9, my - mw * 0.2); g.quadraticCurveTo(mx + s * mw * 0.9, my - mw * 0.1, mx, my - mw * 0.3); g.closePath(); g.fill(); g.stroke(); } }
-  if (L.beard) { g.beginPath(); g.moveTo(mx - mw * 0.5, my + mw * 0.5); g.lineTo(mx, my + mw * 2.2); g.lineTo(mx + mw * 0.5, my + mw * 0.5); g.closePath(); inkFill(g, L.beard, 4.5); }
   if (P.sweat) { g.beginPath(); g.moveTo(hx + R * 0.82, hy - R * 0.5); g.quadraticCurveTo(hx + R * 1.0, hy - R * 0.2, hx + R * 0.82, hy - R * 0.14); g.quadraticCurveTo(hx + R * 0.66, hy - R * 0.2, hx + R * 0.82, hy - R * 0.5); inkFill(g, "#9fd4ff", 4); }
 };
 
@@ -108,14 +118,15 @@ export const drawPerson = (g: G, L: Look, P: Pose) => {
   const legC = L.legs ?? INK;
   for (const s of [-1, 1]) {
     const fx = cx + s * 30 + s * sw * 46, lift = wk === undefined ? 0 : Math.max(0, -s * Math.cos(wk)) * 22;
-    line(g, [[cx + s * 26, hipY + bob], [cx + s * 28 + s * sw * 20, (hipY + foot) / 2], [fx, foot - 8 - lift]], 15); if (legC !== INK) line(g, [[cx + s * 26, hipY + bob], [cx + s * 28 + s * sw * 20, (hipY + foot) / 2], [fx, foot - 8 - lift]], 8, legC);
+    const knee = [cx + s * 28 + s * sw * 26 + (wk === undefined ? 0 : 10), (hipY + foot) / 2 - lift * 0.6];
+    noodle(g, [cx + s * 26, hipY + bob], knee, [fx, foot - 8 - lift], 15); if (legC !== INK) noodle(g, [cx + s * 26, hipY + bob], knee, [fx, foot - 8 - lift], 8, legC);
     ell(g, fx + 9, foot - 7 - lift, 21, 10); g.fillStyle = INK; g.fill();
   }
   g.translate(0, bob);
   // far arm (drawn behind the torso), then torso, then near arm on top
   const sh: [number, number][] = [[cx - tw * 0.82, ty - th * 0.5], [cx + tw * 0.82, ty - th * 0.5]];
   const hands = [P.lh ?? [-0.35, 1.25], P.rh ?? [0.35, 1.25]].map((h, i) => [sh[i][0] + h[0] * R, sh[i][1] + h[1] * R] as [number, number]);
-  const arm = (i: number) => { const s = i ? 1 : -1, h = hands[i], el: [number, number] = [(sh[i][0] + h[0]) / 2 + s * 16, (sh[i][1] + h[1]) / 2 + 20]; line(g, [sh[i], el, h], 14); drawHeld(g, i ? P.held ?? null : P.heldL ?? null, h[0], h[1], s); ell(g, h[0], h[1], 15, 15); g.fillStyle = INK; g.fill(); };
+  const arm = (i: number) => { const s = i ? 1 : -1, h = hands[i], el: [number, number] = [(sh[i][0] + h[0]) / 2 + s * 16, (sh[i][1] + h[1]) / 2 + 20]; noodle(g, sh[i], el, h, 14); drawHeld(g, i ? P.held ?? null : P.heldL ?? null, h[0], h[1], s); ell(g, h[0], h[1], 15, 15); g.fillStyle = INK; g.fill(); };
   const torso = () => { g.beginPath(); g.ellipse(cx, ty, tw, th, 0, 0, Math.PI * 2); };
   torso(); inkFill(g, L.coat, 10);
   g.save(); torso(); g.clip();
@@ -165,4 +176,7 @@ export const drawRat = (g: G, r: Rat) => {
 
 /** blink helper: a 4-frame blink at pseudo-random intervals of 0.6-2.4 s, different per character seed */
 export const blinkAt = (f: number, seed: number) => { let t = (seed * 37) % 50; let i = 0; while (t < f - 3) { t += 18 + ((Math.sin(seed * 12.9 + i++ * 78.2) * 43758.5) % 1 + 1) % 1 * 54; } return f >= t && f < t + 4; };
+/** mouth flap for a spoken line: three shapes changing every 3 frames between frames a and b (reference: mouths
+ *  move only on in-character lines, never under narration) */
+export const talk = (f: number, a: number, b: number): Mouth | undefined => (f >= a && f < b ? (["open", "dash", "o", "open", "smile"] as Mouth[])[Math.floor((f - a) / 3) % 5] : undefined);
 export const settle = (f: number, a: number, dur = 7) => clamp01((f - a) / dur);

@@ -9,7 +9,7 @@ a GPU, or a GPU machine. Only the speed changes.
 cd studio
 npm install
 node scripts/stills.mjs RatTails out/s_ 60,150,300 0.5        # stills at half size, about 5 s each
-node scripts/render.mjs RatTails out/rat-tails.mp4 audio/mix.wav
+node scripts/render.mjs RatTails out/rat-tails.mp4 audio/rat-tails/mix.wav
 python3 scripts/frame_qa.py out/rat-tails.mp4 --sheet out/qa.jpg
 ```
 
@@ -48,11 +48,13 @@ A session needs that repository attached with push access. Without it, render lo
 ## Sound
 
 ```bash
-python3 audio/tts.py          # voice_text.txt -> voice24.wav (Kokoro; needs kokoro-v1.0.onnx and voices-v1.0.bin beside it)
-python3 audio/align.py        # voice.wav -> words.json (faster-whisper small.en)
-python3 audio/fetch_sfx.py    # CC0 effects from Freesound -> audio/sfx/ + CREDITS.md (FREESOUND_TOKEN)
-python3 audio/make.py         # score + effects + mix -> audio/mix.wav, audio/cues.md
+python3 audio/voice.py <film>        # audio/<film>/voice_text.txt -> voice.wav, lines.json, words.json (Kokoro + faster-whisper)
+python3 audio/fetch_sfx.py           # CC0 effects from Freesound -> audio/sfx/ + CREDITS.md (FREESOUND_TOKEN)
+npx tsx scripts/plan_lint.ts <film>  # also writes audio/<film>/warp.json, the timing the sound follows
+python3 audio/<film>/make.py         # score + effects + mix -> audio/<film>/mix.wav, cues.md
+python3 scripts/audio_qa.py audio/<film>/mix.wav src/videos/<film>/words.json
 ```
 
 Python needs `numpy scipy soundfile kokoro-onnx faster-whisper pillow`. The Kokoro model files are about 350 MB
-and are not committed: download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from the kokoro-onnx GitHub releases.
+and are not committed: download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from the kokoro-onnx GitHub releases into
+`studio/audio/`.

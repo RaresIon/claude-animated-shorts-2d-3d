@@ -46,3 +46,32 @@ the "rat goes home" beat restaged, the ending pulled closer). The final render h
    synthetic voice without a human narrator's timing on jokes.
 5. **Motion was reviewed from stills and contact sheets only.** Nobody has yet watched it against the reference in
    motion, and the reference's motion and sound have not been re-measured from full videos.
+
+## Second version: the reference-motion pass
+
+After three full reference videos were measured (`docs/reference-motion.md`), the film was re-staged on the same sets
+and re-voiced with three spoken lines. Nothing in the shot list was renumbered: the `warp` table carried every beat
+and every sound cue onto the new voice.
+
+![motion pass](img/proof-4-motion-pass.jpg)
+
+| | v1 | v2 | Reference (3 videos) |
+|---|---|---|---|
+| Plain cuts / whips / flashes | 1 / 4 / 3 | 0 / 0 / 0 (dissolves and camera travel) | 0 |
+| Full-frame changes detected | 8 in 44.5 s | 6 in 44.5 s | 3-5 in 56-65 s |
+| Camera angles | eye level | low, eye, high; 35 of 45 framings tilted | low, eye, high, top-down; about a third tilted |
+| Inserts and wides | none | 2 inserts, 1 far wide | 3-4 inserts, 1-3 wides |
+| Hook | two people standing | a rat coming down on the desk in frame 0, camera pulling out | action in frame 0, camera moving |
+| Spoken lines with mouth flap | 0 | 3 | 1-2 |
+| Captions | 1-3 words at 66 %, pop | 1-2 words at 70 %, no pop | 1-2 words at 70 %, no pop |
+| Empty share / sharpness | 0.12 / 174 | 0.13 / 197 | 0.20 / 189 |
+| Sound gate | (not measured) | -14.1 LUFS, bed 11.1 dB under the voice, 3.72 words/s | -14 to -17 LUFS, 5.5-12.2 dB, 3.4-3.9 |
+
+An independent reviewer scored the first render of v2: frame density 6.5, character staging 5.5, camera and edit
+6.5, light and colour 7.5, drawing 6.5, acting 5, captions 7.5 (v1: 6, 5, n/a, 7, 6, 5, 6). Its one blocker (a chair
+back cutting through the governor from the high angle) and five of its staging notes were fixed before the final
+render, which was not re-scored.
+
+What the reviewer still sees as the gap: characters swap poses but do not run, fall or lean with their whole body;
+the camera pans and dissolves gently where the reference uses dramatic perspective and huge foreground heads; and
+key gags could play larger still.
