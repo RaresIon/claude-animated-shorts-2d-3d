@@ -43,10 +43,14 @@ export const ball = (r: number, m: Skin, sy = 1, ink = true) => { const geo = ne
 /** flat card (decals, posters, rugs, light pools). Vertical by default; `floor` lays it on the ground. */
 export const card = (w: number, h: number, tex: THREE.Texture, opts: { floor?: boolean; unlit?: boolean; add?: boolean; opacity?: number } = {}) => {
   const M = opts.unlit || opts.add ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
-  const m = new M({ map: tex, transparent: true, depthWrite: false, opacity: opts.opacity ?? 1, blending: opts.add ? THREE.AdditiveBlending : THREE.NormalBlending, fog: !opts.add });
+  // polygonOffset: a card always wins the depth test against the surface it lies on, so a rug on a floor or a poster
+  // on a wall cannot flicker, even when it is placed exactly in that surface's plane
+  const m = new M({ map: tex, transparent: true, depthWrite: false, opacity: opts.opacity ?? 1, blending: opts.add ? THREE.AdditiveBlending : THREE.NormalBlending, fog: !opts.add, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const geo = new THREE.PlaneGeometry(w, h);
   if (opts.floor) geo.rotateX(-Math.PI / 2); else geo.translate(0, h / 2, 0);
   const mesh = new THREE.Mesh(geo, m); mesh.renderOrder = 2;
+  // lettering made with paint.sign() is registered for plan_lint (edges, legibility), whatever prop it is glued to
+  const s = tex.userData.sign as { h: number; lines: { t: string; size: number }[] } | undefined; if (s && !opts.floor) mesh.userData.sign = { w, h, texH: s.h, lines: s.lines };
   return mesh;
 };
 /** soft dark contact shadow under a prop */
@@ -111,17 +115,17 @@ export const shelf = (w = 1.6, h = 2.1, seed = 1, wood = "#7a4a28") => {
     let x = -w / 2 + 0.1;
     while (x < w / 2 - 0.14) {
       const k = r();
-      if (k < 0.6) { const bw = 0.05 + r() * 0.05, bh = 0.24 + r() * 0.14; g.add(at(box(bw, bh, 0.22, ["#b9483c", "#3d6a8a", "#d9a441", "#4f7a4a", "#6a4a7a", "#e8e2d2"][Math.floor(r() * 6)], false), x + bw / 2, y + 0.04, 0.08, 0, 0, r() < 0.12 ? 0.25 : 0)); x += bw + 0.008; }
+      if (k < 0.6) { const bw = 0.05 + r() * 0.05, bh = 0.24 + r() * 0.14; g.add(at(box(bw, bh, 0.22, ["#b9483c", "#3d6a8a", "#d9a441", "#4f7a4a", "#6a4a7a", "#e8e2d2"][Math.floor(r() * 6)], false), x + bw / 2, y + 0.04, 0.08 + (g.children.length % 5) * 0.004, 0, 0, r() < 0.12 ? 0.25 : 0)); x += bw + 0.008; } // fronts staggered: a leaning book overlaps its neighbour
       else if (k < 0.8) { g.add(at(cyl(0.07, 0.07, 0.2, ["#9fd0c8", "#e8c66a", "#c9d7e8"][Math.floor(r() * 3)], 8), x + 0.08, y + 0.04, 0.08), at(cyl(0.05, 0.05, 0.03, "#7a5a36", 8, false), x + 0.08, y + 0.24, 0.08)); x += 0.19; }
       else { g.add(at(box(0.2, 0.14 + r() * 0.1, 0.2, planks("#c9a06a", 3)), x + 0.11, y + 0.04, 0.08)); x += 0.25; }
     }
   }
   return g;
 };
-export const rug = (w = 2.4, d = 1.5, a = "#a83a3a", b = "#e8c66a") => at(card(w, d, sign(`rug${a}${b}`, 512, 320, a, [], b, (g) => {
+export const rug = (w = 2.4, d = 1.5, a = "#a83a3a", b = "#e8c66a") => group(at(card(w, d, sign(`rug${a}${b}`, 512, 320, a, [], b, (g) => {
   g.strokeStyle = b; g.lineWidth = 8; g.strokeRect(36, 36, 440, 248);
   for (let i = 0; i < 5; i++) { g.save(); g.translate(96 + i * 80, 160); g.rotate(Math.PI / 4); g.strokeRect(-26, -26, 52, 52); g.restore(); }
-}), { floor: true }), 0, 0.01, 0);
+}), { floor: true }), 0, 0.01, 0)); // in a group, so dress() cannot cancel the lift off the floor
 
 // ---------------------------------------------------------------- desk dressing
 export const papers = (n = 5, seed = 1) => { const r = rng(seed), g = group(); for (let i = 0; i < n; i++) g.add(at(box(0.22, 0.012, 0.3, i % 3 ? "#f3ead2" : "#e3d6b4", i === n - 1), -0.02 + r() * 0.04, i * 0.012, -0.02 + r() * 0.04, r() * 0.5 - 0.25)); return g; };
@@ -142,7 +146,7 @@ export const candle = () => group(cyl(0.07, 0.08, 0.02, "#c9a03a", 8), cyl(0.025
 // ---------------------------------------------------------------- walls: windows, doors, pictures, lamps
 export const windowLit = (w = 1.1, h = 1.5, pane = "#bfe3f5", frame = "#6b4a2d", shutters?: string) => {
   const g = group(box(w + 0.16, h + 0.16, 0.08, frame), at(new THREE.Mesh(new THREE.PlaneGeometry(w, h), glow(pane)), 0, h / 2 + 0.08, 0.045));
-  g.add(at(box(0.05, h, 0.03, frame, false), 0, 0.08, 0.05), at(box(w, 0.05, 0.03, frame, false), 0, h * 0.55, 0.05), at(box(w + 0.34, 0.07, 0.2, shade(frame, 1.15)), 0, -0.02, 0.06));
+  g.add(at(box(0.05, h, 0.03, frame, false), 0, 0.08, 0.05), at(box(w, 0.05, 0.03, frame, false), 0, h * 0.55, 0.05), at(box(w + 0.34, 0.07, 0.2, shade(frame, 1.15)), 0, -0.02, 0.064));
   if (shutters) for (const s of [-1, 1]) g.add(at(box(w * 0.46, h + 0.1, 0.05, planks(shutters, 7)), s * (w * 0.75 + 0.06), 0.03, 0.03, s * -0.25));
   return g;
 };
@@ -151,10 +155,11 @@ export const door = (w = 1, h = 2.05, c = "#5d7a4a") => {
   g.add(at(box(w * 0.7, h * 0.3, 0.02, shade(c, 1.12)), 0, h * 0.58, 0.085), at(box(w * 0.7, h * 0.36, 0.02, shade(c, 1.12)), 0, h * 0.1, 0.085), at(ball(0.045, "#e2b84a"), w * 0.36, h * 0.47, 0.11));
   return g;
 };
-/** marks a lettered card inside a set so plan_lint can find it, project it and judge whether it can be read */
-const lettered = <T extends THREE.Object3D>(o: T, w: number, h: number, tex: THREE.Texture) => { const s = tex.userData.sign as { h: number; lines: { t: string; size: number }[] } | undefined; if (s) o.userData.sign = { w, h, texH: s.h, lines: s.lines }; return o; };
-export const framed = (w: number, h: number, tex: THREE.Texture, frame = "#c9a03a") => group(box(w + 0.12, h + 0.12, 0.05, frame), at(lettered(card(w, h, tex), w, h, tex), 0, 0.06, 0.03));
-export const poster = (w: number, h: number, tex: THREE.Texture, tilt = 0) => at(lettered(card(w, h, tex), w, h, tex), 0, 0, 0.012, 0, 0, tilt);
+/** Marks a prop the story is about ("the carrots", "the note"). plan_lint then fails when it is cut by the frame
+ *  edge or sits under the caption while it is big in frame: `dress(g, [[hero(P.crate(0.7, "CARROTS"), "carrots"), [0, 0, 1]]])`. */
+export const hero = <T extends THREE.Object3D>(o: T, name: string) => { o.userData.hero = name; return o; };
+export const framed = (w: number, h: number, tex: THREE.Texture, frame = "#c9a03a") => group(box(w + 0.12, h + 0.12, 0.05, frame), at(card(w, h, tex), 0, 0.06, 0.03));
+export const poster = (w: number, h: number, tex: THREE.Texture, tilt = 0) => at(card(w, h, tex), 0, 0, 0.012, 0, 0, tilt);
 /** hanging lamp: cord, shade, glowing bulb, and the pool of light it throws on the floor `drop` below */
 export const lampHang = (drop = 2.6, cord = 0.7, c = "#3d6a5a", pool = 3.2) => {
   const g = group(at(cyl(0.012, 0.012, cord, INK, 4, false), 0, -cord, 0), at(cyl(0.06, 0.34, 0.2, c, 12), 0, -cord - 0.2, 0));
