@@ -151,17 +151,17 @@ const s7 = (f: number): CastItem[] => {
 
 // 8. YOU SEE (830-1013): one dead rat = one cent. A tailless rat goes home... and comes back with a family.
 const s8cam = (f: number): Cam => track(f, [
-  { f: 830, cam: { pos: [-1.3, 1.35, 3.3], look: [-1.3, -0.3, 0.3], fov: 40 } },
-  { f: 892, cam: { pos: [0.3, 1.5, 3.3], look: [0.55, -0.1, -1.5], fov: 42 }, dur: 11 },
-  { f: 972, cam: { pos: [0.55, 1.9, 2.4], look: [0.6, -0.25, -1.3], fov: 44 }, dur: 10 },
+  { f: 830, cam: { pos: [-1.15, 1.35, 3.5], look: [-1.15, 1.1, 0.3], fov: 40 } },
+  { f: 892, cam: { pos: [0.3, 0.35, 3.3], look: [0.55, 1.0, -1.5], fov: 42 }, dur: 11 },
+  { f: 972, cam: { pos: [0.55, 0.6, 2.5], look: [0.6, 0.8, -1.3], fov: 44 }, dur: 10 },
 ]);
 const s8 = (f: number): CastItem[] => {
   const c: CastItem[] = [];
-  c.push({ kind: "rat", id: "dead", at: [-1.15, 0.02, 0.3], s: 2.0, roll: Math.PI, rat: { dead: true, tail: true }, shadow: false });
-  if (f >= 866) c.push(fx("eq", TEX.equals1(), [-1.25, 1.2, 0.3], 1.3 * overshoot(prog(f, 866, 7)), 0.65 * overshoot(prog(f, 866, 7))));
+  c.push({ kind: "rat", id: "dead", at: [-1.15, 0.72, 0.3], s: 1.9, rat: { dead: true, tail: true }, shadow: false });
+  if (f >= 866) c.push(fx("eq", TEX.equals1(), [-1.15, 1.75, 0.3], 1.3 * overshoot(prog(f, 866, 7)), 0.65 * overshoot(prog(f, 866, 7))));
   // the tailless rat walks home (894-939), disappears inside, hearts, then babies pop out one by one (944+)
   const home: V3 = [0.95, 0, -2.6], go = prog(f, 894, 44);
-  if (f >= 880 && f < 940) c.push({ kind: "rat", id: "hero", at: [-0.6 + (home[0] + 0.6) * go, 0, 0.1 + (home[2] - 0.1) * go], s: 2.3 - 0.9 * go, rat: { tail: false, bandage: true, mood: "smug", phase: f * 0.6 } });
+  if (f >= 884 && f < 940) c.push({ kind: "rat", id: "hero", at: [-0.3 + (home[0] + 0.3) * go, 0, 0.1 + (home[2] - 0.1) * go], s: 2.3 - 0.9 * go, rat: { tail: false, bandage: true, mood: "smug", phase: f * 0.6 } });
   if (f >= 938 && f < 975) for (let i = 0; i < 3; i++) { const u = prog(f, 938 + i * 7, 26); if (u > 0 && u < 1) c.push(fx(`he${i}`, TEX.heart(), [home[0] - 0.3 + i * 0.35, 1.5 + u * 1.0, home[2] + 0.2], 0.42 * overshoot(u * 3), 0.42 * overshoot(u * 3), 1 - u * u)); }
   const kids = Math.min(11, Math.floor((f - 946) / 4.2));
   for (let i = 0; i < kids; i++) { const born = 946 + i * 4.2, u = burst(prog(f, born, 12)), row = Math.floor(i / 4), tx = -0.25 + (i % 4) * 0.5 + (row % 2) * 0.22, tz = -1.75 + row * 0.6;
