@@ -5,8 +5,8 @@
                                    audio/<film>/lines.json       (start/end of every line: exact, from the synthesis)
                                    src/videos/<film>/words.json  (start/end of every word: faster-whisper)
 Pauses longer than 0.22 s inside a line are tightened to 0.16 s and lines are 0.2 s apart, which lands at the
-reference pace of 3.4-3.9 words per second. Read the transcript it prints: a wrong word there means the voice
-mispronounced it, so reword the line. Needs kokoro-v1.0.onnx and voices-v1.0.bin in audio/ (docs/rendering.md).
+reference pace of 3.4-3.9 words per second. It ends by running scripts/transcript_check.py --fix: mis-heard
+spellings are repaired from the script, and a dropped or added word stops the run (reword the line). Needs kokoro-v1.0.onnx and voices-v1.0.bin in audio/ (docs/rendering.md).
 A recorded human voice is better: put it at audio/<film>/voice.wav and run with --align-only."""
 import json, os, subprocess, sys
 import numpy as np
@@ -47,3 +47,5 @@ dst = os.path.join(HERE, "..", "src", "videos", film); os.makedirs(dst, exist_ok
 json.dump(words, open(os.path.join(dst, "words.json"), "w"))
 print(" ".join(w["w"] for w in words))
 print(f"{len(words)} words, {len(audio) / 16000:.1f} s, {len(words) / (words[-1]['e'] - words[0]['s']):.2f} words/s")
+# the aligner mis-hears names: repair spellings from the script, and stop if the voice dropped or added a word
+if os.path.exists(os.path.join(D, "voice_text.txt")): sys.exit(subprocess.run([sys.executable, os.path.join(HERE, "..", "scripts", "transcript_check.py"), film, "--fix"]).returncode)

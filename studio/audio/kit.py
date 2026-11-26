@@ -99,5 +99,6 @@ class Mix:
             mix = np.where(np.abs(mix) > c * 0.7, np.sign(mix) * (c * 0.7 + c * 0.3 * np.tanh((np.abs(mix) - c * 0.7) / (c * 0.3))), mix)
         mix[:, -ns(0.05):] *= np.linspace(1, 0, ns(0.05))
         write_wav(os.path.join(self.dir, "mix.wav"), mix)
+        json.dump([{"f": int(f), "name": n} for f, n in sorted(self.cues)], open(os.path.join(self.dir, "cues.json"), "w"))  # read by plan_lint: impacts need a cue
         open(os.path.join(self.dir, "cues.md"), "w").write("# Cue sheet (frame @30 fps, time, what)\n\n" + "\n".join(f"- {int(f):4d}  {self.fr(f):6.2f} s  {n}" for f, n in sorted(self.cues)) + "\n")
         print("mix LUFS", round(integrated(mix), 2), "true peak", round(true_peak(mix), 2), "length", round(mix.shape[1] / SR, 2), "s")

@@ -151,8 +151,10 @@ export const door = (w = 1, h = 2.05, c = "#5d7a4a") => {
   g.add(at(box(w * 0.7, h * 0.3, 0.02, shade(c, 1.12)), 0, h * 0.58, 0.085), at(box(w * 0.7, h * 0.36, 0.02, shade(c, 1.12)), 0, h * 0.1, 0.085), at(ball(0.045, "#e2b84a"), w * 0.36, h * 0.47, 0.11));
   return g;
 };
-export const framed = (w: number, h: number, tex: THREE.Texture, frame = "#c9a03a") => group(box(w + 0.12, h + 0.12, 0.05, frame), at(card(w, h, tex), 0, 0.06, 0.03));
-export const poster = (w: number, h: number, tex: THREE.Texture, tilt = 0) => at(card(w, h, tex), 0, 0, 0.012, 0, 0, tilt);
+/** marks a lettered card inside a set so plan_lint can find it, project it and judge whether it can be read */
+const lettered = <T extends THREE.Object3D>(o: T, w: number, h: number, tex: THREE.Texture) => { const s = tex.userData.sign as { h: number; lines: { t: string; size: number }[] } | undefined; if (s) o.userData.sign = { w, h, texH: s.h, lines: s.lines }; return o; };
+export const framed = (w: number, h: number, tex: THREE.Texture, frame = "#c9a03a") => group(box(w + 0.12, h + 0.12, 0.05, frame), at(lettered(card(w, h, tex), w, h, tex), 0, 0.06, 0.03));
+export const poster = (w: number, h: number, tex: THREE.Texture, tilt = 0) => at(lettered(card(w, h, tex), w, h, tex), 0, 0, 0.012, 0, 0, tilt);
 /** hanging lamp: cord, shade, glowing bulb, and the pool of light it throws on the floor `drop` below */
 export const lampHang = (drop = 2.6, cord = 0.7, c = "#3d6a5a", pool = 3.2) => {
   const g = group(at(cyl(0.012, 0.012, cord, INK, 4, false), 0, -cord, 0), at(cyl(0.06, 0.34, 0.2, c, 12), 0, -cord - 0.2, 0));

@@ -6,17 +6,19 @@ import * as THREE from "three";
 import { AbsoluteFill, continueRender, delayRender, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
 import { useThree } from "@react-three/fiber";
-import { Cam, drift, mixCam, whip } from "./camera";
+import { Cam, whip } from "./camera";
+import { aim, personCard, shotCam } from "./frame";
 import { MOODS, Mood, MoodName } from "./moods";
 import { Look, PH, PW, Pose, RH, RW, Rat, drawPerson, drawRat } from "./chars";
-import { V3, burst, ctex } from "./util";
+import { V3, ctex } from "./util";
 import { blob } from "./paint";
 import { Captions, Word } from "./Captions";
 
 export type CastItem =
-  | { kind: "person"; id: string; look: Look; pose: Pose; at: V3; h?: number; flip?: boolean; shadow?: boolean }
-  | { kind: "rat"; id: string; rat: Rat; at: V3; s?: number; flip?: boolean; roll?: number; shadow?: boolean }
-  | { kind: "card"; id: string; tex: THREE.Texture; at: V3; w: number; h: number; roll?: number; add?: boolean; opacity?: number; flat?: boolean };
+  | { kind: "person"; id: string; look: Look; pose: Pose; at: V3; h?: number; flip?: boolean; shadow?: boolean; crop?: boolean }
+  | { kind: "rat"; id: string; rat: Rat; at: V3; s?: number; flip?: boolean; roll?: number; shadow?: boolean; crop?: boolean }
+  | { kind: "card"; id: string; tex: THREE.Texture; at: V3; w: number; h: number; roll?: number; add?: boolean; opacity?: number; flat?: boolean; crop?: boolean };
+// `crop: true` tells plan_lint this item is MEANT to be cut by the frame edge (a foreground shoulder, a wind streak).
 export type SetDef = { root: THREE.Object3D; tick?: (f: number) => void };
 export type Shot = {
   a: number; b: number; set: string; mood: MoodName;
@@ -26,6 +28,9 @@ export type Shot = {
    *  or time, "move" (the camera travels from the previous framing in one burst; same set only), rarely "dip"/"flash". */
   into?: "dissolve" | "move" | "dip" | "flash" | "whip" | "cut";
   tag?: "insert" | "wide";           // for plan_lint: a deliberate prop insert or far wide
+  /** plan_lint waivers for this shot: ids of cast items or the first line of a sign (e.g. "FOR SALE") that may be cut,
+   *  hidden or too small here, or "lens" for a deliberate object right in front of the camera. Each one is printed. */
+  allow?: string[];
 };
 /** Time warp: shots are authored on one timeline (`from` frames); when the voice is re-recorded, give the new frame
  *  of each anchor in `to` and the whole film follows without touching a shot. Piecewise linear. */
@@ -104,16 +109,10 @@ class Engine {
     this.sun.color.set(m.key[0]); this.sun.intensity = m.key[1];
     this.scene.background = skyTex(m, shot.mood); this.fog.color.set(m.fog[0]); this.fog.near = m.fog[1]; this.fog.far = m.fog[2];
     // camera
-    let c = shot.cam(f); const yaw = whip(f, shot.a, shot.b, shot.into === "whip", next?.into === "whip");
-    if (shot.into === "move" && i > 0 && f < shot.a + 14) c = mixCam(shots[i - 1].cam(shot.a - 1), c, burst((f - shot.a + 1) / 14)); // travel in from the previous framing
-    c = drift(c, f); // the camera never fully stops
-    cam.position.set(...c.pos); cam.fov = c.fov ?? 40; cam.aspect = aspect; cam.near = 0.1; cam.far = 400; cam.up.set(0, 1, 0);
-    cam.lookAt(c.look[0], c.look[1], c.look[2]); cam.rotateY(-yaw);
-    // cards face the lens (before the dutch roll); their tilt is capped at 35 degrees so a card seen from a steep
-    // angle does not lean back through the furniture behind it
-    const fe = new THREE.Euler().setFromQuaternion(cam.quaternion, "YXZ"); fe.x = Math.max(-0.6, Math.min(0.6, fe.x)); fe.z = 0;
-    const face = new THREE.Quaternion().setFromEuler(fe), up = new THREE.Vector3(0, 1, 0).applyQuaternion(face);
-    cam.rotateZ(c.roll ?? 0); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    // travel in from the previous framing on a "move"; the camera never fully stops (drift). Cards face the lens
+    // (before the dutch roll) with their tilt capped at 35 degrees, so a card seen from a steep angle does not lean
+    // back through the furniture behind it. All of it lives in frame.ts, where plan_lint uses the very same code.
+    const c = shotCam(shots, i, f), { face, up } = aim(cam, c, aspect, whip(f, shot.a, shot.b, shot.into === "whip", next?.into === "whip"));
     const kd = new THREE.Vector3(...m.key[2]).normalize().multiplyScalar(30);
     this.sun.target.position.set(c.look[0], 0, c.look[2]); this.sun.position.set(c.look[0] + kd.x, kd.y, c.look[2] + kd.z); this.sun.target.updateMatrixWorld();
     // cast
@@ -125,7 +124,7 @@ class Engine {
       if (it.kind === "person") {
         const key = JSON.stringify([it.look, it.pose]);
         if (key !== cd.key) { const g = cd.canvas!.getContext("2d")!; g.setTransform(RES, 0, 0, RES, 0, 0); drawPerson(g, it.look, it.pose); cd.tex!.needsUpdate = true; cd.key = key; }
-        h = (it.h ?? 1.7) * (PH / 580); w = h * (PW / PH); y0 = -h * (20 / PH);
+        ({ w, h, y0 } = personCard(it.h));
         cd.mesh.quaternion.copy(face);
       } else if (it.kind === "rat") {
         mat.map = this.rat(it.rat); h = 0.42 * (it.s ?? 1); w = h * (RW / RH); y0 = -h * (20 / RH);

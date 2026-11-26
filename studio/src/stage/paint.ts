@@ -124,8 +124,8 @@ export const stoneBlocks = (base = "#5d6b7a", rep?: [number, number]) =>
   }, rep);
 
 /** a painted sign / poster / label with real lettering. `font` is a CSS font family loaded by Fonts.tsx. */
-export const sign = (key: string, w: number, h: number, bg: string, lines: { t: string; size: number; col?: string; font?: string; y: number }[], border = INK, extra?: (g: G) => void) =>
-  ctex(`sign${key}`, w, h, (g, r) => {
+export const sign = (key: string, w: number, h: number, bg: string, lines: { t: string; size: number; col?: string; font?: string; y: number }[], border = INK, extra?: (g: G) => void) => {
+  const t = ctex(`sign${key}`, w, h, (g, r) => {
     if (bg.length === 7) { g.fillStyle = bg; g.fillRect(0, 0, w, h); }
     if (bg.length === 7) for (let i = 0; i < 12; i++) { g.fillStyle = shade(bg, 0.9 + r() * 0.15) + "77"; g.beginPath(); g.ellipse(r() * w, r() * h, 30 + r() * 50, 12 + r() * 20, r() * 3, 0, 7); g.fill(); }
     extra?.(g);
@@ -133,6 +133,9 @@ export const sign = (key: string, w: number, h: number, bg: string, lines: { t: 
     for (const l of lines) { g.font = `${l.size}px ${l.font ?? "Rye"}, serif`; g.fillStyle = l.col ?? INK; g.fillText(l.t, w / 2, l.y, w * 0.92); }
     if (border.length === 7) { g.strokeStyle = border; g.lineWidth = Math.max(8, w * 0.03); g.strokeRect(0, 0, w, h); }
   });
+  if (lines.length) t.userData.sign = { h, lines: lines.map((l) => ({ t: l.t, size: l.size })) }; // what plan_lint reads to judge legibility
+  return t;
+};
 
 export const flat = (c: string) => ctex(`flat${c}`, 8, 8, (g) => { g.fillStyle = c; g.fillRect(0, 0, 8, 8); });
 
