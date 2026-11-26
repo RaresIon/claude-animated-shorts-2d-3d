@@ -5,7 +5,8 @@ with light that changes with the story, word-by-word captions, narration, an ori
 Everything is code (three.js inside Remotion, Canvas2D drawing, synthesized music): no AI video generator, no
 external 3D models, and it renders on a plain CPU.
 
-Worked example: **The Rat Tail Problem** (Hanoi, 1902; 44.5 s), in `studio/src/videos/rat-tails/`.
+Worked examples: **The Rat Tail Problem** (Hanoi, 1902; 44.5 s) in `studio/src/videos/rat-tails/` and **Late for
+Dinner** (the Vikings find America by accident; 47 s) in `studio/src/videos/vikings/`.
 
 ## What's inside
 | Path | What it is |
@@ -15,6 +16,7 @@ Worked example: **The Rat Tail Problem** (Hanoi, 1902; 44.5 s), in `studio/src/v
 | `docs/style-gap-analysis.md` | why the earlier shorts fell short of the reference, root cause by root cause |
 | `docs/style-rules.md` | the reviewer checklist |
 | `docs/rendering.md` | CPU, GPU and Modal rendering; the sound tools |
+| `docs/reference-motion.md` | motion, edit and sound measured on three full reference videos, and the gates built from them |
 | `docs/proof-rat-tails.md` | the proof short measured against the reference and the earlier shorts |
 | `references/` | style study of the reference channel: frames, contact sheets, measured reports (private study only) |
 | `templates/`, `docs/legacy-bridge-skill.md` | the first pipeline (the bridge short: post-processing look, GPU only), kept for its look research |
@@ -29,8 +31,9 @@ By hand:
 cd studio
 npx tsx scripts/plan_lint.ts rat-tails                       # staging lint, no rendering
 node scripts/stills.mjs RatTails out/s_ 60,300,700 0.5       # look at frames
-python3 audio/make.py                                        # score + effects + mix
-node scripts/render.mjs RatTails out/rat-tails.mp4 audio/mix.wav
+python3 audio/rat-tails/make.py                              # score + effects + mix
+python3 scripts/audio_qa.py audio/rat-tails/mix.wav src/videos/rat-tails/words.json
+node scripts/render.mjs RatTails out/rat-tails.mp4 audio/rat-tails/mix.wav
 python3 scripts/frame_qa.py out/rat-tails.mp4 --sheet out/qa.jpg
 ```
 

@@ -9,7 +9,8 @@ Everything runs from `studio/`. A film is **two files**: its sets (`sets.ts`) an
 engine, props, characters, light, camera, captions and QA are shared and live in `studio/src/stage/` and
 `studio/scripts/`.
 
-- Worked example: `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s). Copy it to start a new film.
+- Worked examples: `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
+  copy) and `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s: shows a re-voiced film carried by `warp`).
 - Why the kit looks the way it does: `docs/style-gap-analysis.md`. The rules in short: `docs/style-rules.md`.
 - Rendering on CPU, GPU and Modal: `docs/rendering.md`.
 - The older bridge pipeline (post-processing look, GPU only) is kept in `templates/bridge/` and
@@ -65,10 +66,12 @@ swaps with no pop. Turn them off
    hook (the paradox as a flat fact, first sentence) → setting → escalation in three or four beats → a turn
    ("Then somebody notices...") → "You see," and the mechanism → consequence → an ironic last line that ends the
    video. Never describe what the viewer already sees.
-3. **Voice.** `audio/voice_text.txt`, then `python3 audio/tts.py` (Kokoro neural voice; pauses over 0.22 s are
-   tightened) and `python3 audio/align.py` (word times → `src/videos/<film>/words.json`). Read the transcript the
-   aligner prints: if a word is wrong there, the voice mispronounced it; reword the line. A recorded human voice is
-   better: drop it in as `audio/voice.wav` and run only the aligner.
+3. **Voice.** Write `audio/<film>/voice_text.txt` (one line per sentence group), then
+   `python3 audio/voice.py <film> "names, odd words"`: Kokoro neural voice with pauses tightened to the reference
+   pace, plus word times in `src/videos/<film>/words.json`. Read the transcript it prints: a wrong word there means
+   the voice mispronounced it (reword the line) or the aligner misheard it (fix the word in `words.json`, the
+   captions are made from it). A recorded human voice is better: put it at `audio/<film>/voice.wav` and add
+   `--align-only`.
 4. **Shot list on paper first.** One line per sentence: place, mood, who is big in frame, what is in their hand,
    what changes on which word, what is written on screen, how the shot is entered. Check it against the seven rules
    before writing code.
@@ -91,12 +94,13 @@ swaps with no pop. Turn them off
 8. **Stills, every shot.** `node scripts/stills.mjs <Comp> out/s_ <frames> 0.5`: one frame per beat (about 5 s
    each on CPU). Make a contact sheet and **look at it**. Fix framing: nobody cut by the frame edge, no prop hiding a
    face or a sign, nothing important under the caption.
-9. **Sound** (`audio/`). `python3 audio/fetch_sfx.py` pulls CC0 effects from Freesound (credits file written
-   automatically); `python3 audio/make.py` builds the score, places each effect on its picture frame and mixes:
+9. **Sound** (`audio/<film>/make.py`, built on `audio/kit.py`). `python3 audio/fetch_sfx.py` pulls CC0 effects
+   from Freesound (credits file written automatically). In `make.py`, pin every cue to a word with `m.F("word")`,
+   the same helper as in `film.ts`; `python3 audio/<film>/make.py` builds the score, places the effects and mixes:
    voice unchanged, music about 11 LU under it and ducked on speech, effects placed relative to the voice,
    -14 LUFS, true peak under -1 dB. Cue frames are mapped through `audio/warp.json`, which `plan_lint` writes.
-   Check it with `python3 scripts/audio_qa.py audio/mix.wav src/videos/<film>/words.json`.
-10. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/mix.wav` (resumable chunks; about 3 s per
+   Check it with `python3 scripts/audio_qa.py audio/<film>/mix.wav src/videos/<film>/words.json`.
+10. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/<film>/mix.wav` (resumable chunks; about 3 s per
    frame at 1080x1920 on four CPU cores, far faster with `GL=angle-egl` on a GPU), or on Modal in parallel
    chunks. See `docs/rendering.md`.
 11. **QA, required.** `python3 scripts/frame_qa.py out/<film>.mp4 --sheet out/qa.jpg` must print PASS. Then read
