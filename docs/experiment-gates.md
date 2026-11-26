@@ -50,8 +50,11 @@ The three failures the new lint finds in the old film: an effect card cut by the
 
 ## Next gates this points to
 
-- Flicker: two coplanar surfaces within a few millimetres (the rug blocker).
-- Props with lettering (crates, painted labels) registered like signs.
-- Captions over hands, held props and tagged "hero" props, not only faces.
-- A camera that moves more than a burst allows in one frame inside a shot.
-- A check that each sentence's key noun is on screen as a picture or as lettering.
+The first four are now in `plan_lint.ts` (see `docs/gates.md`). Run on the "new" film of this experiment they
+reported the two defects the reviewers had found (the crate label reading "LVES" and the cut poster), since fixed.
+
+- Done. Flicker: two coplanar surfaces within a few millimetres (the rug blocker).
+- Done. Props with lettering (crates, painted labels) registered like signs.
+- Done. Captions over hands, held props and tagged "hero" props, not only faces.
+- Done. A camera that moves more than a burst allows in one frame inside a shot.
+- Open. A check that each sentence's key noun is on screen as a picture or as lettering.
