@@ -11,10 +11,20 @@ reference channel's quality and style, root cause by root cause, and what was ch
 | Emu v1 | `previews/emu-war/emu-war.mp4` (R2), 1440x2560, 61.0 s | 2 frames/s contact sheets (122 frames), full frames, `frame_qa.py`, ebur128 loudness |
 | Emu POV | `previews/emu-war-pov/emu-war-pov.mp4` (R2), 1080x1920, 68.5 s; source `examples/emu-war/` on branch `claude/blissful-brown-ahjkws` | same, plus its `story.ts`, `world.ts`, README |
 
+| Reference, latest | 9 real frames (25/50/75 %) of three of the channel's latest Shorts the owner linked: "The Prisoner Who Tunneled Into a Bank", "Why Samurai Feared The Flying Thunder", "How Mine Salting Worked" (`docs/img/ref3/`, fetched with the Sitefarm `scout_frames` tool) | read one by one |
+
+![three latest](img/ref-latest-3.jpg)
+
+What the latest three add to the picture: the main character is even bigger than in the older set (half the frame
+height or more, centred), every set is an interior or a night scene with a visible light source (cell window, tent
+lamps, mine lantern), props cast real shadows, and the caption is small (about 6 % of the frame width per letter
+height), white, one or two words.
+
 **Limits of this analysis, stated plainly.**
-- The channel's *five latest* Shorts could not be downloaded from the build machine (YouTube's bot check refused every
+- The channel's latest Shorts could not be downloaded from the build machine (YouTube's bot check refused every
   player client tried, and no mirrors exist). The picture analysis therefore uses the reference frames this repo
-  already held (the channel's 20 latest shorts as of 2026-10-30). Nothing here is taken from thumbnails or descriptions.
+  already held (the channel's 20 latest shorts as of 2026-10-30) plus nine still frames of three of the latest
+  Shorts. Those nine are low-resolution (203x360) and show no motion.
 - Reference **sound and motion** were not re-measured: the numbers quoted for them come from the measured study in
   `references/STYLE_BIBLE.md` and `references/reports/motion.md` (made from the real videos), not from new listening.
 - The source of Emu v1 lives in another repository that could not be attached, so its code was not read; its picture
@@ -130,9 +140,9 @@ See `SKILL.md` (rewritten), `docs/style-rules.md`, `docs/rendering.md` and `stud
 | Root cause | Fix |
 |---|---|
 | 1, 2 | `studio/src/stage/`: a film-agnostic engine. `props.ts` (50+ inked, painted props, no external models), `sets.ts` (room, street, tunnel, field), `paint.ts` (surfaces and lettered signs), `chars.ts` (people with hats, held props, 9 mouths, 8 eye types; rats). A film is now two files: sets and a shot list. |
-| 3, 7, 9 | `studio/scripts/frame_qa.py`: gates on empty-frame share, sharpness, palette and number of light moods, with a marked contact sheet. Required before delivery. |
+| 3, 7, 9 | Two deterministic gates. `studio/scripts/plan_lint.ts` reads the shot list and, without rendering, fails a cast under 30 % of the frame height, a face under the caption, a shot where nothing changes, too many plain cuts, fewer than three moods. `studio/scripts/frame_qa.py` measures the rendered film: empty-frame share, sharpness, palette, moods, with a marked contact sheet. Both are required before delivery. |
 | 4 | `studio/src/stage/Captions.tsx`: word-by-word captions from `words.json`, on by default. |
 | 5 | `studio/src/stage/camera.ts`: `track()` = hold + ease-out burst, `whip()` and dip/flash transitions; hard cuts are the exception. |
 | 6 | `studio/src/stage/moods.ts`: seven light moods (day, golden, dusk, night, sewer, interior, explain); lamps and windows throw visible pools. |
-| 8 | No post-processing passes: inverted-hull ink, painted textures, CSS grade. Full 1080x1920 on four CPU cores at about 3 s per frame; stills in about 5 s. |
+| 8 | No post-processing passes: inverted-hull ink, painted textures, shadow-mapped key light, CSS grade. Full 1080x1920 on four CPU cores at about 3 s per frame, stills in about 5 s; the same project renders on Modal in parallel chunks (`docs/rendering.md`). |
 | 10 | `studio/audio/`: Kokoro neural voice, pauses tightened to the reference's pace; CC0 recorded effects from Freesound with a credits file; the synthesized score stays. |

@@ -1,7 +1,7 @@
 import soundfile as sf, numpy as np, json
 from kokoro_onnx import Kokoro
 k = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
-lines = [l.strip() for l in open("text.txt") if l.strip()]
+lines = [l.strip() for l in open("voice_text.txt") if l.strip()]
 out = []; sr = 24000
 for i, l in enumerate(lines):
     a, sr = k.create(l, voice="am_michael", speed=1.28, lang="en-us")

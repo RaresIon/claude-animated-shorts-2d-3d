@@ -28,7 +28,7 @@ machine with every post pass switched off, and 11-20 s per frame at quarter size
 Set `GL=angle-egl` (Linux with an NVIDIA GPU) or `GL=angle` (macOS/Windows). Expect 10-30 frames per second.
 For a 2K export pass a scale: `node scripts/render.mjs RatTails out/x.mp4 audio/mix.wav 1.3333`.
 
-## Modal (remote GPU)
+## Modal (parallel CPU containers)
 
 The Modal Remotion workflow lives in the private `sitefarmDocs` repository (branch `claude/funny-volta-5klybo`:
 `shorts/remotion/modal_remotion.py` and `.github/workflows/remotion-modal.yml`). To use it:
