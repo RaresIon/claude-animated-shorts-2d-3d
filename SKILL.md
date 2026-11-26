@@ -9,7 +9,7 @@ Everything runs from `studio/`. A film is **two files**: its sets (`sets.ts`) an
 engine, props, characters, light, camera, captions and QA are shared and live in `studio/src/stage/` and
 `studio/scripts/`.
 
-- Worked examples: `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
+- Worked examples: `studio/src/videos/carrots/` (10 s, passes every gate: the pattern to copy for framing with `fit()`), `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
   copy) and `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s: shows a re-voiced film carried by `warp`).
 - Why the kit looks the way it does: `docs/style-gap-analysis.md`. The rules in short: `docs/style-rules.md`.
 - Rendering on CPU, GPU and Modal: `docs/rendering.md`.

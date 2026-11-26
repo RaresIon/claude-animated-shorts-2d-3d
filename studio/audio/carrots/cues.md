@@ -1,0 +1,28 @@
+# Cue sheet (frame @30 fps, time, what)
+
+-    0    0.00 s  guns (bed)
+-    0    0.00 s  slipstream (bed)
+-    0    0.00 s  two engines (bed)
+-   44    1.47 s  contact!
+-   66    2.20 s  guns, close (bed)
+-   78    2.60 s  the bomber is hit
+-   79    2.63 s  hit
+-   86    2.87 s  the pilot
+-   95    3.17 s  camera round
+-  122    4.07 s  valve hum (bed)
+-  126    4.20 s  shh
+-  140    4.67 s  blip pops
+-  140    4.67 s  the blip
+-  158    5.27 s  the announcement
+-  170    5.67 s  he tells
+-  181    6.03 s  everyone
+-  201    6.70 s  the cloth
+-  206    6.87 s  carrots!
+-  222    7.40 s  candle (bed)
+-  238    7.93 s  ?
+-  253    8.43 s  camera
+-  255    8.50 s  shrug
+-  276    9.20 s  the bowl
+-  278    9.27 s  served
+-  281    9.37 s  the kid
+-  286    9.53 s  the last word

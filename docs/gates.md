@@ -65,3 +65,11 @@ an independent reviewer are still required (`docs/style-rules.md`).
   film framed with `fit()` must pass.
 - `python3 scripts/kit_test.py`: nine frames covering the sets, moods, hats, held props and prop library, compared with
   stored pictures in `studio/test/golden/`.
+
+## Where the example films stand
+
+- `carrots` (10 s) was made with these gates and passes all of them. How it compares with the same film made
+  without them: `docs/experiment-gates.md`.
+- `vikings` and `rat-tails` were made before `plan_lint` checked edges, occlusion and legibility. It now reports
+  15 and 40 failures in them; they are left as they were delivered, as a record. Fix them with `fit()` before
+  using either as a pattern for framing.
