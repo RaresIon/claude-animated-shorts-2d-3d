@@ -220,6 +220,6 @@ export const farm = (): SetDef => {
   // the sign only appears with the reveal, so it is never half in frame before it
   const signG = group(put(P.poster(1.6, 1.07, TEX.notRats(), -0.05), -0.4, 1.5, PEN[2] + 1.78), put(P.box(0.09, 2.5, 0.09, "#8a5a30"), -0.4, 0, PEN[2] + 1.72));
   g.add(signG);
-  return { root: g, tick: (f) => { signG.visible = f >= 1088; } };
+  return { root: g, tick: (f) => { signG.visible = f >= 1090; } };
 };
 export { bricks };
