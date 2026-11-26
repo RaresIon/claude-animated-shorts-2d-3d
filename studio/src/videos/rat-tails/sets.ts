@@ -81,7 +81,7 @@ export const office = (): SetDef => {
     t.position.set(-0.05 + Math.cos(a) * rad, 0.97 + k * 0.62, -1.28 + Math.sin(a) * rad * 0.55); t.rotation.set(r() * 0.8 - 0.4, r() * 6.28, r() * 0.8 - 0.4); t.scale.setScalar(1.25);
     tails.push(t); g.add(t);
   }
-  const cancelled = put(P.card(1.35, 0.46, TEX.cancelled(), { unlit: true }), -0.42, 1.95, B + 0.1, 0, 0, 0.22);
+  const cancelled = put(P.card(1.1, 0.375, TEX.cancelled(), { unlit: true }), -0.42, 1.95, B + 0.1, 0, 0, 0.22);
   g.add(cancelled);
   return { root: g, tick: (f) => {
     const n = f < TAILS_FROM ? 0 : Math.min(90, Math.floor(((f - TAILS_FROM) / (TAILS_TO - TAILS_FROM - 20)) * 90));
@@ -170,7 +170,7 @@ export const explain = (): SetDef => {
     [P.bush(0.5, "#5a8a7a", 2), [2.5, 0, -2.6]],
     [P.bush(0.45, "#5a8a7a", 5), [-0.2, 0, -3.5]],
     [P.fence(2.4, 0.6, "#a98a6a"), [-1.6, 0, -3.3], 0.1],
-    [P.crate(0.5, "1¢"), [-1.75, 0, -0.2], 0.4],
+    [P.crate(0.5, "1¢"), [-2.2, 0, -0.9], 0.4],
     [P.coinStack(4, 0.09, 4), [-1.2, 0, 0.75]],
     [P.tree(3.6, "#4a7a8a", 3), [-2.6, 0, -4.6]],
     [P.tree(4.2, "#4a7a8a", 6), [3.4, 0, -5.4]],
@@ -192,10 +192,9 @@ export const farm = (): SetDef => {
     [P.fence(3.4, 0.85), [PEN[0] + 2.8, 0, PEN[2]], Math.PI / 2],
     [P.trough(1.3), [PEN[0] + 1.2, 0, PEN[2] - 0.9], 0.2],
     [P.haystack(0.75), [PEN[0] - 1.9, 0, PEN[2] - 1.0]],
-    [P.poster(1.5, 1.0, TEX.notRats(), -0.05), [-0.45, 1.0, PEN[2] + 1.78]],
-    [P.box(0.09, 1.9, 0.09, "#8a5a30"), [-0.45, 0, PEN[2] + 1.72]],
-    [P.bush(1.0, "#6a9a48", 3), [-2.3, 0, 1.4]],
-    [P.bush(0.8, "#7aa850", 7), [-1.5, 0, 1.9]],
+            [P.bush(0.7, "#6a9a48", 3), [-2.3, 0, 1.4]],
+    [P.bush(0.55, "#7aa850", 7), [-1.3, 0, 1.9]],
+    [P.crate(0.5, "FEED"), [-0.7, 0, 2.2], 0.4],
     [P.basket(0.34), [2.0, 0, -0.6]],
     [P.basket(0.3), [2.6, 0, -1.0]],
     [P.sack(0.6), [2.9, 0, -0.2], 0.5],
@@ -212,6 +211,9 @@ export const farm = (): SetDef => {
   const tails = group(); const r = rng(3);
   for (let i = 0; i < 14; i++) { const t = tail3d(); t.position.set(2.0 + (r() - 0.5) * 0.35, 0.34 + r() * 0.12, -0.6 + (r() - 0.5) * 0.35); t.rotation.set(r() - 0.5, r() * 6, 1 + r()); t.scale.setScalar(1.3); tails.add(t); }
   g.add(tails);
-  return { root: g };
+  // the sign only appears with the reveal, so it is never half in frame before it
+  const signG = group(put(P.poster(1.6, 1.07, TEX.notRats(), -0.05), -0.4, 1.5, PEN[2] + 1.78), put(P.box(0.09, 2.5, 0.09, "#8a5a30"), -0.4, 0, PEN[2] + 1.72));
+  g.add(signG);
+  return { root: g, tick: (f) => { signG.visible = f >= 1088; } };
 };
 export { bricks };

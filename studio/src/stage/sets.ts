@@ -32,7 +32,7 @@ export const street = (o: { len?: number; road?: string; far?: boolean } = {}) =
 /** sewer tunnel along x: brick arch, two walkways, a channel of green water down the middle */
 export const tunnel = (o: { len?: number; r?: number; stone?: string } = {}) => {
   const len = o.len ?? 30, r = o.r ?? 3.2, stone = o.stone ?? "#5d6b7a";
-  const arch = new THREE.CylinderGeometry(r, r, len, 20, 1, true, 0, Math.PI).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2 + Math.PI);
+  const arch = new THREE.CylinderGeometry(r, r, len, 20, 1, true, 0, Math.PI).rotateZ(Math.PI / 2);
   const am = lit(stoneBlocks(stone, [len / 4, 3])); am.side = THREE.BackSide;
   const g = group(new THREE.Mesh(arch, am));
   const water = ctex("sewerwater", 256, 256, (c, q) => { c.fillStyle = "#2f6a5a"; c.fillRect(0, 0, 256, 256); c.strokeStyle = "#7fd0a8"; c.lineWidth = 4; c.lineCap = "round"; for (let i = 0; i < 26; i++) { const x = q() * 256, y = q() * 256; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 14, y - 5, x + 30, y); c.stroke(); } }, [len / 3, 1]);
