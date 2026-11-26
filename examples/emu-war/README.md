@@ -14,3 +14,7 @@ CPU-only note (no GPU, SwiftShader WebGL): the render is fill-rate bound — abo
 ~20 s/frame with the lens blur on. This version renders at 540x960 (`post.dpr` 0.5) and is upscaled to 1080x1920.
 MSAA 0 breaks the lens-blur pass (blank frames), so keep MSAA >= 2. Bloom only runs on golden shots, lens blur only
 when the shot's `cInf` > 0.
+
+Final render: done on a Modal L4 GPU (Chromium `gl: "angle-egl"`) at the skill's full spec (1440x2560, MSAA 4, full lens
+blur) in ~25 min including the image build. The Modal app and its branch-only workflow live in RaresIon/sitefarmDocs on
+branch `claude/emu-war-remotion-modal` (`remotion/modal_emu.py`, `.github/workflows/emu-war-render.yml`).
