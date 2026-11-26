@@ -9,7 +9,7 @@ Everything runs from `studio/`. A film is **two files**: its sets (`sets.ts`) an
 engine, props, characters, light, camera, captions and QA are shared and live in `studio/src/stage/` and
 `studio/scripts/`.
 
-- Worked examples: `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
+- Worked examples: `studio/src/videos/carrots/` (10 s, passes every gate: the pattern to copy for framing with `fit()`), `studio/src/videos/vikings/` ("Late for Dinner", 47 s: every beat pinned to a word, the pattern to
   copy) and `studio/src/videos/rat-tails/` ("The Rat Tail Problem", 44.5 s: shows a re-voiced film carried by `warp`).
 - Why the kit looks the way it does: `docs/style-gap-analysis.md`. The rules in short: `docs/style-rules.md`.
 - Rendering on CPU, GPU and Modal: `docs/rendering.md`.
@@ -21,10 +21,24 @@ characters, jokes, logos or audio. Learn the craft, make your own story.
 
 ## The ten rules that make the look
 
-These are gates, not advice. Three scripts check them without anyone's judgment: `scripts/plan_lint.ts` (before
-rendering: cast size, faces under captions, dead shots, cuts, angles, inserts, hook, captions, pace),
-`scripts/frame_qa.py` (after: empty frame share, sharpness, palette, moods) and `scripts/audio_qa.py` (loudness,
-music level under the voice, pauses, ending on the last word).
+These are gates, not advice. Scripts check them without anyone's judgment, and one command runs them all in order
+and stops at the first failure: `python3 scripts/make_short.py <film>` (see `docs/gates.md` for every check and its
+threshold).
+
+- `scripts/transcript_check.py`: the voice said the script; mis-heard spellings are repaired.
+- `scripts/plan_lint.ts` (before rendering, 2 s): heads, cards and signs cut by the frame edge; a face behind another
+  character or a prop; a sign behind the cast or under the caption; something right in front of the lens; lettering
+  that can never be read; a sentence with nothing changing on screen; impacts without a sound; a weak last frame;
+  plus cast size, cuts, angles, inserts, hook, captions and pace.
+- `scripts/frame_qa.py` (after): empty frame share, sharpness, palette, moods, contrast, flat or grey shots, the
+  last frame.
+- `scripts/audio_qa.py`: loudness, music level under the voice, pauses, ending on the last word.
+
+**Frame with `fit()`, not by hand.** `fit(subjects, { yaw, pitch, fill })` in `stage/frame.ts` returns a camera that
+holds every subject whole inside the 9:16 frame: `cam: (f) => fit(cast(f), { yaw: 20, pitch: 8 })`. Typing camera
+positions by hand is what cut people and signs in half in both proof films. A deliberate exception is declared, not
+hidden: `crop: true` on a cast item that is meant to be cut (a foreground shoulder), `allow: ["FOR SALE", "lens"]`
+on a shot.
 
 1. **Fill the frame.** A 9:16 frame is only about 2.8 m wide when it shows 5 m of height, so stack the set
    vertically: lamp and pictures above, cast in the middle, named props on the floor in front. A set is not done until
@@ -68,9 +82,9 @@ swaps with no pop. Turn them off
    video. Never describe what the viewer already sees.
 3. **Voice.** Write `audio/<film>/voice_text.txt` (one line per sentence group), then
    `python3 audio/voice.py <film> "names, odd words"`: Kokoro neural voice with pauses tightened to the reference
-   pace, plus word times in `src/videos/<film>/words.json`. Read the transcript it prints: a wrong word there means
-   the voice mispronounced it (reword the line) or the aligner misheard it (fix the word in `words.json`, the
-   captions are made from it). A recorded human voice is better: put it at `audio/<film>/voice.wav` and add
+   pace, plus word times in `src/videos/<film>/words.json`. It ends with `scripts/transcript_check.py --fix`: a word the aligner
+   mis-heard is rewritten from the script (the captions are made from `words.json`), and a word the voice dropped or
+   added stops the run: reword that line. A recorded human voice is better: put it at `audio/<film>/voice.wav` and add
    `--align-only`.
 4. **Shot list on paper first.** One line per sentence: place, mood, who is big in frame, what is in their hand,
    what changes on which word, what is written on screen, how the shot is entered. Check it against the seven rules
@@ -81,30 +95,32 @@ swaps with no pop. Turn them off
    pipes, grates...). New props: compose `box`, `cyl`, `ball`, `card` and `inked()`; give every surface a painted
    texture from `stage/paint.ts`. Aim for 20-30 placed props per set. Things that change over time go in the set's
    `tick(f)`.
-6. **Shots** (`film.ts`). Per shot: `a`, `b` (frames), `set`, `mood`, `cam` (a `track()` of framings), `cast`
+6. **Shots** (`film.ts`). Per shot: `a`, `b` (frames), `set`, `mood`, `cam` (framings from `fit()`, joined by
+   `track()` when the camera moves within the shot), `cast`
    (people, rats or other creatures, effect cards, each a function of the frame), `into` and an optional `tag`.
    Pin every beat to a spoken word with a helper like `F("word", nth)` (see the example). If the voice is
    re-recorded later, do not renumber the shots: give the film a `warp` (old anchor frames → the new frames of the
    same words) and every beat, and every sound cue, follows.
-7. **Lint the plan (no rendering).** `npx tsx scripts/plan_lint.ts <film>` projects every character through
-   every shot's camera and fails on: a cast smaller than 30 % of the frame height, a face under the caption, a shot
-   where nothing changes, any plain cut, fewer than three moods, fewer than three camera angles, too few tilted
-   framings, no insert or no wide, a static hook, captions longer than two words, narration outside 3.3-4.1 words
-   per second. It takes two seconds: run it after every edit.
-8. **Stills, every shot.** `node scripts/stills.mjs <Comp> out/s_ <frames> 0.5`: one frame per beat (about 5 s
-   each on CPU). Make a contact sheet and **look at it**. Fix framing: nobody cut by the frame edge, no prop hiding a
-   face or a sign, nothing important under the caption.
+7. **Lint the plan (no rendering).** `npx tsx scripts/plan_lint.ts <film>` builds the sets in node and plays the
+   film through the engine's own camera code. It reports, with frame ranges, everything listed under the gates
+   above. It takes two seconds: run it after every edit and fix every FAIL before rendering a single still. A
+   defect has to last a third of a second to count, so a figure crossing the edge during a camera burst is fine.
+8. **Stills, every shot.** `python3 scripts/make_short.py <film> --to stills` runs the transcript check, the type
+   check and the lint, then renders one frame per shot plus the last frame (about 5 s each on CPU) into
+   `out/<film>/stills.jpg`. **Look at it.** The lint checks geometry; you check that the picture tells the beat.
 9. **Sound** (`audio/<film>/make.py`, built on `audio/kit.py`). `python3 audio/fetch_sfx.py` pulls CC0 effects
    from Freesound (credits file written automatically). In `make.py`, pin every cue to a word with `m.F("word")`,
    the same helper as in `film.ts`; `python3 audio/<film>/make.py` builds the score, places the effects and mixes:
    voice unchanged, music about 11 LU under it and ducked on speech, effects placed relative to the voice,
    -14 LUFS, true peak under -1 dB. Cue frames are mapped through `audio/warp.json`, which `plan_lint` writes.
-   Check it with `python3 scripts/audio_qa.py audio/<film>/mix.wav src/videos/<film>/words.json`.
+   `make.py` also writes `cues.json`; `plan_lint --need-cues` then fails if a camera shake has no sound on its
+   frame. `python3 scripts/make_short.py <film> --to sound` runs all of this and `audio_qa.py` on the mix.
 10. **Render.** `node scripts/render.mjs <Comp> out/<film>.mp4 audio/<film>/mix.wav` (resumable chunks; about 3 s per
    frame at 1080x1920 on four CPU cores, far faster with `GL=angle-egl` on a GPU), or on Modal in parallel
    chunks. See `docs/rendering.md`.
-11. **QA, required.** `python3 scripts/frame_qa.py out/<film>.mp4 --sheet out/qa.jpg` must print PASS. Then read
-    the sheet yourself, and hand it to a reviewer agent that has not seen your plan, with `docs/style-rules.md` as
+11. **QA, required.** `python3 scripts/make_short.py <film>` (or `--video out/x.mp4` for a film rendered on
+    Modal) runs every gate end to end and must finish with every step `pass`. Then read the sheet `out/<film>/film.jpg`
+    yourself, and hand it to a reviewer agent that has not seen your plan, with `docs/style-rules.md` as
     its checklist. Fix what it finds and re-render the affected chunks (delete them from `out/chunks_*`).
 12. **Deliver** the MP4 and a side-by-side sheet. Say plainly what still falls short.
 
@@ -119,8 +135,12 @@ swaps with no pop. Turn them off
 | `chars.ts` | `drawPerson(look, pose)`: 11 hats (incl. helmet, hood, fur), held props (incl. bowl, ladle), 8 eye types, 9 mouths, brows, curved limbs, walk cycle, side view, squash, lean; `talk` (mouth flap for a spoken line); `drawRat`; `blinkAt` |
 | `moods.ts` | the nine light moods (day, golden, dusk, night, sewer, interior, fog, arctic, explain): sky, ambient, key, fog, cast tint, grade, vignette |
 | `camera.ts` | `track` (hold + burst), `push`, `drift` (always on), `shake` |
+| `frame.ts` | `fit()` (a camera that holds its subjects whole, by construction) and the screen geometry the engine and `plan_lint` share |
 | `Captions.tsx` | word-by-word captions from `words.json` |
 | `util.ts` | easing (`burst`, `overshoot`, `bump`), seeded random, colours, cached canvas textures |
+
+After changing anything in `stage/`, run `python3 scripts/kit_test.py` (nine test frames against stored pictures,
+about a minute) and `npx tsx scripts/lint_test.ts` (the lint against a film staged wrong on purpose).
 
 To add a creature or a new kind of character, add a `draw…` function in `chars.ts` and a `kind` in `Stage.tsx`
 (follow `rat`). To add a mood, add one line to `moods.ts`.
@@ -139,7 +159,7 @@ To add a creature or a new kind of character, add a `draw…` function in `chars
   `2 * dist * tan(fov/2) * 9/16`.
 - A row of people (a ship's crew, a queue) is wider than a vertical frame from the side. Shoot along the row, from
   the bow or the stern, so they stack in depth; keep side views for one or two people.
-- After any camera change, render stills of every shot and check that no person or sign is cut by the frame edge.
-  `plan_lint` checks size and captions, not edges.
+- `plan_lint` knows the cast, effect cards and signs made with `framed()` or `poster()`. It does not know lettering
+  you paint straight onto a prop, or how a pose reads: the stills are still yours to look at.
 - Flags, uniforms and signs are period details: check them (the bridge short's first flag read as the wrong country).
 - Every Remotion bundle copies `public/` into the temp folder. Keep `public/` small (fonts only) and it stays a non-issue.
