@@ -149,7 +149,23 @@ export const avatarOptions: Film = { total: PALETTES.length, sets, words: [{ w: 
 
 // ------------------------------------------------------------------ banner
 // camera level at y = 0.9, 12 m back, fov 30: the phone-safe band is 6.9 m wide and runs from the ground to 1.9 m
-const rat = (id: string, at: V3, r: object, s = 1.4, flip = false): CastItem => ({ kind: "rat", id, rat: r, at, s, flip });
+/** a doodled flower: stem, two leaves, six petals and a centre, all with the ink line (200 x 300, foot at the bottom) */
+const PETALS: [string, string][] = [["#ffd23f", "#ff7a59"], ["#ff9ecb", "#ffd23f"], ["#ffffff", "#ffc928"], ["#ff7a59", "#ffd23f"], ["#b79cff", "#ffd23f"]];
+const flower = (k: number) => ctex(`flower${k}`, 200, 300, (g) => {
+  const [petal, eye] = PETALS[k % PETALS.length], cx = 100, cy = 82;
+  g.lineCap = "round"; g.lineJoin = "round";
+  g.strokeStyle = INK; g.lineWidth = 22; g.beginPath(); g.moveTo(cx, cy + 30); g.quadraticCurveTo(cx + (k % 2 ? 14 : -14), 200, cx, 292); g.stroke(); g.strokeStyle = "#3f9a4a"; g.lineWidth = 9; g.stroke();
+  for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(cx + sx * 36, 222 + sx * 12, 34, 15, sx * -0.5, 0, 7); ink(g, "#57b85a", 8); }
+  for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + k; g.beginPath(); g.arc(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40, 31, 0, 7); g.fillStyle = INK; g.fill(); }
+  for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + k; g.beginPath(); g.arc(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40, 23, 0, 7); g.fillStyle = petal; g.fill(); }
+  g.beginPath(); g.arc(cx, cy, 26, 0, 7); ink(g, eye, 8);
+});
+// [x, z, height, colour]: a few among the cast, a drift across the foreground (kept under the phone-safe band)
+const FLOWERS: [number, number, number, number][] = [
+  [-1.55, 0.6, 0.34, 0], [-1.25, 0.9, 0.28, 2], [3.75, 0.5, 0.36, 1], [4.0, 0.9, 0.28, 3], [-3.9, 0.8, 0.3, 4], [2.9, -1.2, 0.34, 2], [-0.9, -1.6, 0.32, 1], [1.2, -1.9, 0.3, 0],
+  [-2.6, 6.2, 0.42, 1], [-2.1, 6.7, 0.34, 0], [-1.0, 6.0, 0.4, 2], [-0.4, 6.8, 0.32, 4], [0.4, 6.4, 0.44, 0], [1.0, 7.0, 0.3, 3], [1.5, 6.2, 0.4, 1], [2.0, 6.9, 0.32, 2],
+  [-3.4, 4.2, 0.4, 3], [3.5, 4.4, 0.42, 4], [-0.2, 4.6, 0.38, 3], [2.4, 3.6, 0.36, 0], [-1.8, 3.4, 0.36, 4], [-4.6, 2.4, 0.4, 0], [4.8, 2.6, 0.4, 1], [0.9, 2.8, 0.32, 2],
+];
 export const banner: Film = {
   total: 1, sets, words: [{ w: NAME, s: 0, e: 0.03 }], captions: false, res: 4,
   shots: [{ a: 0, b: 1, set: "meadow", mood: "day", into: "cut",
@@ -162,6 +178,6 @@ export const banner: Film = {
       person("boffin", BOFFIN, [-4.6, 0, -1.3], { eyes: "side", look: [0.8, 0], mouth: "o", face: 0.4, rh: [0.4, 0.9], lh: [-0.85, -0.6], heldL: "paper" }, 1.5),
       person("toff", TOFF, [4.3, 0, -0.8], { eyes: "lid", mouth: "smirk", brow: 0.4, face: -0.5, rh: [0.9, -0.3], held: "coin", lh: [-0.4, 0.9] }, 1.6),
       person("farmer", FARMER, [5.3, 0, -0.3], { eyes: "happy", mouth: "smile", face: -0.5, rh: [0.9, -1.0], lh: [-0.4, 0.9], held: "net" }, 1.6),
-      rat("r1", [3.9, 0, 0.3], { mood: "smug", tail: true }, 1.5, true), rat("r2", [-2.6, 0, 6.2], { mood: "happy", coinTail: true }, 1.3), rat("r3", [1.5, 0, 6.4], { mood: "scared", bandage: true }, 1.2, true), rat("r4", [0.4, 0, 6.6], { mood: "smug", tail: true }, 1.0), rat("r5", [-1.0, 0, 6.0], { mood: "plain", tail: true, baby: true }, 1.0, true),
+      ...FLOWERS.map(([x, z, h, k], n): CastItem => ({ kind: "card", id: `flower${n}`, tex: flower(k), at: [x, h / 2, z], w: h * (200 / 300), h, roll: ((n % 3) - 1) * 0.07 })),
     ] }],
 };
