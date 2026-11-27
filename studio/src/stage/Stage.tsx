@@ -35,7 +35,7 @@ export type Shot = {
 /** Time warp: shots are authored on one timeline (`from` frames); when the voice is re-recorded, give the new frame
  *  of each anchor in `to` and the whole film follows without touching a shot. Piecewise linear. */
 export type Warp = { from: number[]; to: number[] };
-export type Film = { total: number; sets: Record<string, () => SetDef>; shots: Shot[]; words: Word[]; captions?: boolean; warp?: Warp };
+export type Film = { total: number; sets: Record<string, () => SetDef>; shots: Shot[]; words: Word[]; captions?: boolean; warp?: Warp; res?: number };
 export const DISSOLVE = 8;
 /** the real output frame being drawn (shot functions receive the authoring frame; spoken-line mouth flaps need the real one) */
 export const clock = { real: 0 };
@@ -62,9 +62,10 @@ const skyTex = (m: Mood, key: string) => ctex(`sky${key}`, 16, 512, (g) => {
   if (m.stars) { g.fillStyle = "#ffffff"; for (let i = 0; i < 26; i++) g.fillRect((i * 7.3) % 16, (i * 37.7) % 300, 1, 1); }
 });
 
-const RES = 2; // cast canvases are drawn at 2x so close-ups and inserts stay crisp
+const RES_DEFAULT = 2; // cast canvases are drawn at 2x so close-ups and inserts stay crisp (Film.res overrides: channel art uses 4)
 type Card = { mesh: THREE.Mesh; sh: THREE.Mesh; canvas?: HTMLCanvasElement; tex?: THREE.CanvasTexture; key: string };
 class Engine {
+  private get res() { return this.film.res ?? RES_DEFAULT; }
   sets = new Map<string, SetDef>();
   cards = new Map<string, Card>();
   ratTex = new Map<string, THREE.CanvasTexture>();
@@ -89,7 +90,7 @@ class Engine {
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); mesh.renderOrder = 5;
       const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: blob("#120a1c"), transparent: true, depthWrite: false, opacity: 0.5 })); sh.renderOrder = 3;
       c = { mesh, sh, key: "" };
-      if (kind === "person") { c.canvas = document.createElement("canvas"); c.canvas.width = PW * RES; c.canvas.height = PH * RES; c.tex = new THREE.CanvasTexture(c.canvas); c.tex.colorSpace = THREE.SRGBColorSpace; c.tex.anisotropy = 4; mat.map = c.tex; }
+      if (kind === "person") { c.canvas = document.createElement("canvas"); c.canvas.width = PW * this.res; c.canvas.height = PH * this.res; c.tex = new THREE.CanvasTexture(c.canvas); c.tex.colorSpace = THREE.SRGBColorSpace; c.tex.anisotropy = 4; mat.map = c.tex; }
       this.castRoot.add(mesh, sh); this.cards.set(id, c);
     }
     return c;
@@ -97,7 +98,7 @@ class Engine {
   private rat(r: Rat) {
     const q = { ...r, phase: Math.round((((r.phase ?? 0) % (Math.PI * 2)) + Math.PI * 2) / (Math.PI / 4)) % 8 * (Math.PI / 4) }, k = JSON.stringify(q);
     let t = this.ratTex.get(k);
-    if (!t) { const c = document.createElement("canvas"); c.width = RW * RES; c.height = RH * RES; const g = c.getContext("2d")!; g.scale(RES, RES); drawRat(g, q); t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.ratTex.set(k, t); }
+    if (!t) { const c = document.createElement("canvas"); c.width = RW * this.res; c.height = RH * this.res; const g = c.getContext("2d")!; g.scale(this.res, this.res); drawRat(g, q); t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; this.ratTex.set(k, t); }
     return t;
   }
   update(f0: number, cam: THREE.PerspectiveCamera, aspect: number, i: number) {
@@ -123,7 +124,7 @@ class Engine {
       let w = 1, h = 1, y0 = 0;
       if (it.kind === "person") {
         const key = JSON.stringify([it.look, it.pose]);
-        if (key !== cd.key) { const g = cd.canvas!.getContext("2d")!; g.setTransform(RES, 0, 0, RES, 0, 0); drawPerson(g, it.look, it.pose); cd.tex!.needsUpdate = true; cd.key = key; }
+        if (key !== cd.key) { const g = cd.canvas!.getContext("2d")!; g.setTransform(this.res, 0, 0, this.res, 0, 0); drawPerson(g, it.look, it.pose); cd.tex!.needsUpdate = true; cd.key = key; }
         ({ w, h, y0 } = personCard(it.h));
         cd.mesh.quaternion.copy(face);
       } else if (it.kind === "rat") {
