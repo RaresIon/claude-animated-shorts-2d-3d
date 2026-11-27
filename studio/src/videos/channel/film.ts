@@ -97,7 +97,7 @@ const logo = (tag: boolean) => ctex(`logo-${NAME}-${tag}`, 2400, tag ? 760 : 560
     g.restore(); x += ws[i];
   });
   if (tag) {
-    g.textAlign = "center"; g.font = `800 150px Poppins, sans-serif`; g.strokeStyle = INK; g.lineWidth = 34; g.strokeText("weird history, doodled", 1200, 650); g.fillStyle = "#ffffff"; g.fillText("weird history, doodled", 1200, 650);
+    g.textAlign = "center"; g.font = `800 140px Poppins, sans-serif`; g.strokeStyle = INK; g.lineWidth = 34; g.strokeText("weird true stories, doodled", 1200, 650); g.fillStyle = "#ffffff"; g.fillText("weird true stories, doodled", 1200, 650);
   }
 });
 

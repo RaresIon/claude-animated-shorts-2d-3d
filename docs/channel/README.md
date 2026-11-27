@@ -15,13 +15,14 @@ Re-render from `studio/`:
 
 ## Bio (channel description)
 
-> Weird history, doodled. 🐩✏️
+> Weird true stories, doodled. 🐩✏️
 >
-> The true stories your teacher skipped: wars lost to birds, laws that backfired, explorers who found a continent
-> and went home for dinner. Each one drawn and told in under a minute.
+> The stories nobody told you: wars lost to birds, laws that backfired, inventions that went wrong, animals that
+> outsmarted everyone. History, science, nature, whatever is strange and real. Each one drawn and told in under a
+> minute.
 >
 > Every fact is checked against real sources. The poodle only does the drawing.
 >
-> New shorts every week. Subscribe so you don't miss the next bad idea in history.
+> New shorts every week. Subscribe so you don't miss the next one.
 
-Short version (handle line, Shorts, TikTok, Instagram): `Weird history, doodled. True stories in under a minute. 🐩✏️`
+Short version (handle line, Shorts, TikTok, Instagram): `Weird true stories, doodled. Each one under a minute. 🐩✏️`
