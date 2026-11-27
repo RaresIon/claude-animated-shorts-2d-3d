@@ -10,7 +10,7 @@ import * as P from "../../stage/props";
 import { field } from "../../stage/sets";
 import { grass } from "../../stage/paint";
 import { Look, Pose } from "../../stage/chars";
-import { G, INK, V3, ctex, rng } from "../../stage/util";
+import { G, INK, V3, ctex, mix, rng } from "../../stage/util";
 
 const { dress } = P;
 export const NAME = "doodle poodle";
@@ -27,13 +27,13 @@ const person = (id: string, look: Look, at: V3, pose: Pose, h = 1.6): CastItem =
 // ------------------------------------------------------------------ the mascot: a poodle who draws
 const FUR = "#fbf5ea", FUR_SH = "rgba(60,40,90,0.14)", PINK = "#ff8fb0";
 /** a fluffy pom: a ring of bumps with one ink outline round the lot */
-const pom = (g: G, x: number, y: number, r: number, col = FUR, lw = 16) => {
+const pom = (g: G, x: number, y: number, r: number, col = FUR, lw = 16, sh = FUR_SH) => {
   const n = Math.max(7, Math.round(r / 14)), bumps: [number, number, number][] = [[x, y, r * 0.8]];
   for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + 0.3; bumps.push([x + Math.cos(a) * r * 0.62, y + Math.sin(a) * r * 0.62, r * 0.42]); }
   g.fillStyle = INK; for (const [bx, by, br] of bumps) { g.beginPath(); g.arc(bx, by, br + lw / 2, 0, 7); g.fill(); }
   g.fillStyle = col; for (const [bx, by, br] of bumps) { g.beginPath(); g.arc(bx, by, br - lw / 2, 0, 7); g.fill(); }
   g.save(); g.beginPath(); for (const [bx, by, br] of bumps) { g.moveTo(bx + br - lw / 2, by); g.arc(bx, by, br - lw / 2, 0, 7); } g.clip(); // soft form shadow, lower right
-  g.fillStyle = FUR_SH; g.beginPath(); g.rect(x - r * 2, y - r * 2, r * 4, r * 4); g.moveTo(x - r * 0.25 + r * 1.05, y - r * 0.25); g.arc(x - r * 0.25, y - r * 0.25, r * 1.05, 0, 7); g.fill("evenodd"); g.restore();
+  g.fillStyle = sh; g.beginPath(); g.rect(x - r * 2, y - r * 2, r * 4, r * 4); g.moveTo(x - r * 0.25 + r * 1.05, y - r * 0.25); g.arc(x - r * 0.25, y - r * 0.25, r * 1.05, 0, 7); g.fill("evenodd"); g.restore();
 };
 const ink = (g: G, fill: string, lw = 16) => { g.fillStyle = fill; g.fill(); g.strokeStyle = INK; g.lineWidth = lw; g.lineJoin = "round"; g.lineCap = "round"; g.stroke(); };
 /** a pencil from (0,0) pointing along +x, `len` long */
@@ -45,21 +45,37 @@ const pencil = (g: G, len: number, t = 44, lw = 12) => {
 };
 const happyEye = (g: G, x: number, y: number, r: number, lw: number) => { g.strokeStyle = INK; g.lineWidth = lw; g.lineCap = "round"; g.beginPath(); g.arc(x, y + r * 0.3, r, Math.PI * 1.12, Math.PI * 1.88); g.stroke(); };
 
-/** head-on portrait for the profile picture (1024 square) */
-const poodleFace = () => ctex("poodle-face", 1024, 1024, (g) => {
-  pom(g, 512, 985, 250);                                                              // chest
-  g.beginPath(); g.roundRect(372, 770, 280, 62, 30); ink(g, "#ff6b4a");               // collar
-  g.beginPath(); g.arc(512, 846, 30, 0, 7); ink(g, "#ffc928", 12);
-  pom(g, 250, 600, 140); pom(g, 774, 600, 140);                                       // ears
-  g.beginPath(); g.ellipse(512, 540, 215, 225, 0, 0, 7); ink(g, FUR);                 // head
-  g.save(); g.beginPath(); g.ellipse(512, 540, 207, 217, 0, 0, 7); g.clip(); g.fillStyle = FUR_SH; g.beginPath(); g.rect(0, 0, 1024, 1024); g.moveTo(700, 480); g.ellipse(470, 480, 230, 240, 0, 0, 7); g.fill("evenodd"); g.restore();
-  pom(g, 512, 262, 168);                                                              // topknot
-  happyEye(g, 418, 500, 46, 22); happyEye(g, 606, 500, 46, 22);
-  g.save(); g.translate(250, 742); g.rotate(-0.16); pencil(g, 470, 54, 15); g.restore(); // the pencil, carried like a stick
-  g.beginPath(); g.ellipse(512, 660, 132, 100, 0, 0, 7); ink(g, "#ffffff");           // muzzle, over the pencil
-  g.beginPath(); g.ellipse(512, 598, 50, 36, 0, 0, 7); g.fillStyle = INK; g.fill();   // nose
-  g.fillStyle = "#ffffff"; g.beginPath(); g.ellipse(498, 588, 14, 8, -0.3, 0, 7); g.fill();
-  g.strokeStyle = INK; g.lineWidth = 14; g.lineCap = "round"; g.beginPath(); g.moveTo(512, 634); g.lineTo(512, 668); g.moveTo(444, 664); g.quadraticCurveTo(478, 702, 512, 668); g.quadraticCurveTo(546, 702, 580, 664); g.stroke();
+/** The profile picture uses exactly three colours plus the ink line: a background, the fur and one accent.
+ *  Everything else is a tint of those three (rays = background + white, fur shadow = fur + background). */
+export type Pal = { name: string; bg: string; fur: string; accent: string };
+export const PALETTES: Pal[] = [
+  { name: "violet / cream / yellow", bg: "#5b2be0", fur: "#fff6e5", accent: "#ffc928" },
+  { name: "pink / cream / teal", bg: "#ff4d8d", fur: "#fff6e5", accent: "#19c2b8" },
+  { name: "blue / cream / orange", bg: "#2456f0", fur: "#fff6e5", accent: "#ffa51f" },
+  { name: "teal / cream / coral", bg: "#10b3ab", fur: "#fff6e5", accent: "#ff5a4d" },
+];
+/** head-on portrait for the profile picture (1024 square; the circle crop is the middle 940) */
+const poodleFace = (c: Pal) => ctex(`poodle-face-${c.bg}${c.accent}`, 1024, 1024, (g) => {
+  const sh = mix(c.fur, c.bg, 0.24), L = 20, fluff = (x: number, y: number, r: number) => pom(g, x, y, r, c.fur, L, sh);
+  g.translate(512, 512); g.rotate(-0.09); g.translate(-512, -512);                    // a small head tilt
+  fluff(512, 1070, 250);                                                              // chest
+  g.beginPath(); g.roundRect(356, 842, 312, 70, 34); ink(g, c.accent, L);             // collar
+  g.beginPath(); g.arc(512, 930, 34, 0, 7); ink(g, c.fur, 15);                        // tag
+  fluff(222, 650, 152); fluff(802, 650, 152);                                         // ears
+  g.beginPath(); g.ellipse(512, 570, 236, 240, 0, 0, 7); ink(g, c.fur, L);            // head
+  g.save(); g.beginPath(); g.ellipse(512, 570, 226, 230, 0, 0, 7); g.clip(); g.fillStyle = sh; g.beginPath(); g.rect(0, 0, 1024, 1024); g.moveTo(712, 505); g.ellipse(462, 505, 250, 262, 0, 0, 7); g.fill("evenodd"); g.restore();
+  fluff(512, 268, 190);                                                               // topknot
+  happyEye(g, 408, 540, 50, 26); happyEye(g, 616, 540, 50, 26);
+  // the pencil, carried like a stick: accent body, fur-coloured eraser and wood
+  g.save(); g.translate(236, 800); g.rotate(-0.13);
+  g.beginPath(); g.rect(0, -31, 470, 62); ink(g, c.accent, 17); g.beginPath(); g.rect(-58, -31, 58, 62); ink(g, c.fur, 17);
+  g.beginPath(); g.moveTo(470, -31); g.lineTo(552, 0); g.lineTo(470, 31); g.closePath(); ink(g, c.fur, 17);
+  g.beginPath(); g.moveTo(520, -12); g.lineTo(552, 0); g.lineTo(520, 12); g.closePath(); g.fillStyle = INK; g.fill();
+  g.restore();
+  g.beginPath(); g.ellipse(512, 712, 146, 108, 0, 0, 7); ink(g, c.fur, L);            // muzzle, over the pencil
+  g.beginPath(); g.ellipse(512, 646, 56, 40, 0, 0, 7); g.fillStyle = INK; g.fill();   // nose
+  g.fillStyle = c.fur; g.beginPath(); g.ellipse(496, 634, 15, 9, -0.3, 0, 7); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 17; g.lineCap = "round"; g.beginPath(); g.moveTo(512, 686); g.lineTo(512, 722); g.moveTo(438, 716); g.quadraticCurveTo(475, 760, 512, 722); g.quadraticCurveTo(549, 760, 586, 716); g.stroke();
 });
 
 /** whole dog, side on, facing right (1100 x 900; paws on y = 860) */
@@ -71,7 +87,7 @@ const poodleBody = () => ctex("poodle-body", 1100, 900, (g) => {
   pom(g, 300, 520, 118, FUR, 14);                                                     // hip
   leg(380, 600, -10); leg(650, 600, 8);                                               // near legs
   pom(g, 620, 480, 170, FUR, 15);                                                     // chest and mane
-  g.beginPath(); g.roundRect(600, 318, 150, 48, 22); ink(g, "#ff6b4a", 12);           // collar
+  g.beginPath(); g.roundRect(600, 318, 150, 48, 22); ink(g, PALETTES[0].accent, 12);           // collar
   g.beginPath(); g.ellipse(700, 232, 118, 108, 0, 0, 7); ink(g, FUR, 15);             // head
   g.save(); g.translate(806, 286); g.rotate(-0.5); pencil(g, 215, 44, 13); g.restore(); // pencil in the mouth, point up and forward
   g.beginPath(); g.moveTo(760, 192); g.quadraticCurveTo(900, 192, 906, 248); g.quadraticCurveTo(900, 302, 770, 298); g.closePath(); ink(g, "#ffffff", 14); // snout
@@ -97,21 +113,20 @@ const logo = (tag: boolean) => ctex(`logo-${NAME}-${tag}`, 2400, tag ? 760 : 560
     g.restore(); x += ws[i];
   });
   if (tag) {
-    g.textAlign = "center"; g.font = `800 140px Poppins, sans-serif`; g.strokeStyle = INK; g.lineWidth = 34; g.strokeText("weird true stories, doodled", 1200, 650); g.fillStyle = "#ffffff"; g.fillText("weird true stories, doodled", 1200, 650);
+    g.textAlign = "center"; g.font = `800 150px Poppins, sans-serif`; g.strokeStyle = INK; g.lineWidth = 34; g.strokeText("stories doodled", 1200, 650); g.fillStyle = "#ffffff"; g.fillText("stories doodled", 1200, 650);
   }
 });
 
-/** sunburst backdrop for the profile picture */
-const burst = () => ctex("avatar-burst", 1024, 1024, (g) => {
-  g.fillStyle = "#3ec6c0"; g.fillRect(0, 0, 1024, 1024);
-  g.translate(512, 560);
-  for (let i = 0; i < 16; i++) { g.rotate(Math.PI / 8); g.fillStyle = "#59d8d0"; g.beginPath(); g.moveTo(0, 0); g.lineTo(-150, -1100); g.lineTo(150, -1100); g.closePath(); g.fill(); }
-  const q = rng(5); g.strokeStyle = "#ffffff"; g.lineWidth = 9; g.lineCap = "round"; g.globalAlpha = 0.55; // doodle marks
-  for (let i = 0; i < 26; i++) { const a = q() * 7, d = 330 + q() * 330, x = Math.cos(a) * d, y = Math.sin(a) * d; g.beginPath(); if (i % 3 === 0) { g.arc(x, y, 14, 0, 7); } else if (i % 3 === 1) { g.moveTo(x - 16, y); g.lineTo(x + 16, y); g.moveTo(x, y - 16); g.lineTo(x, y + 16); } else { g.moveTo(x - 20, y); g.quadraticCurveTo(x - 6, y - 18, x, y); g.quadraticCurveTo(x + 8, y + 18, x + 20, y); } g.stroke(); }
+/** sunburst backdrop for the profile picture: the background colour and a slightly lighter tint of it */
+const burst = (c: Pal) => ctex(`avatar-burst-${c.bg}`, 1024, 1024, (g) => {
+  g.fillStyle = c.bg; g.fillRect(0, 0, 1024, 1024);
+  g.translate(512, 560); g.fillStyle = mix(c.bg, "#ffffff", 0.13);
+  for (let i = 0; i < 12; i++) { g.rotate(Math.PI / 6); g.beginPath(); g.moveTo(0, 0); g.lineTo(-150, -1100); g.lineTo(150, -1100); g.closePath(); g.fill(); }
 });
+const studio = (c: Pal) => () => { const back = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: burst(c), fog: false })); back.position.set(0, 1.2, -2.5); return { root: new THREE.Group().add(back) }; };
 
 const sets: Record<string, () => SetDef> = {
-  studio: () => { const back = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: burst(), fog: false })); back.position.set(0, 1.2, -2.5); return { root: new THREE.Group().add(back) }; },
+  ...Object.fromEntries(PALETTES.map((c, i) => [`studio${i}`, studio(c)])),
   meadow: () => ({ root: dress(field({ ground: grass("#86c24f", [40, 40]) }), [
     // behind the cast: the places the shorts go
     [P.longhouse(5), [-9.5, 0, -9], 0.25], [P.hut(3.2), [9.2, 0, -8.5], -0.3], [P.haystack(), [6.2, 0, -6.2]], [P.fence(5.6), [-5.2, 0, -5.2]], [P.fence(5.6), [5.6, 0, -4.6]],
@@ -124,12 +139,13 @@ const sets: Record<string, () => SetDef> = {
 };
 
 // ------------------------------------------------------------------ profile picture
-export const avatar: Film = {
-  total: 1, sets, words: [{ w: NAME, s: 0, e: 0.03 }], captions: false, res: 4,
-  shots: [{ a: 0, b: 1, set: "studio", mood: "day", into: "cut",
-    cam: () => ({ pos: [0, 1.2, 2.23], look: [0, 1.2, 0], fov: 30 }),
-    cast: () => [{ kind: "card", id: "poodle", tex: poodleFace(), at: [0, 1.2, 0], w: 1.3, h: 1.3 }] }],
-};
+const portrait = (i: number): Film["shots"][number] => ({ a: i, b: i + 1, set: `studio${i}`, mood: "day", into: "cut",
+  cam: () => ({ pos: [0, 1.2, 2.23], look: [0, 1.2, 0], fov: 30 }),
+  cast: () => [{ kind: "card", id: `poodle${i}`, tex: poodleFace(PALETTES[i]), at: [0, 1.185, 0], w: 1.18, h: 1.18 }] });
+/** the profile picture: PALETTES[0] */
+export const avatar: Film = { total: 1, sets, words: [{ w: NAME, s: 0, e: 0.03 }], captions: false, res: 4, shots: [portrait(0)] };
+/** one frame per palette, to compare them side by side (ChannelAvatarOptions) */
+export const avatarOptions: Film = { total: PALETTES.length, sets, words: [{ w: NAME, s: 0, e: 0.03 }], captions: false, res: 4, shots: PALETTES.map((_, i) => portrait(i)) };
 
 // ------------------------------------------------------------------ banner
 // camera level at y = 0.9, 12 m back, fov 30: the phone-safe band is 6.9 m wide and runs from the ground to 1.9 m

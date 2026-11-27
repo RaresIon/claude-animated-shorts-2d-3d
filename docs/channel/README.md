@@ -13,9 +13,24 @@ Re-render from `studio/`:
     node scripts/stills.mjs ChannelAvatar out/channel/avatar 0 1
     node scripts/stills.mjs ChannelBanner out/channel/banner 0 1
 
+## Profile picture colours
+
+Three colours plus the ink line; every other tone is a tint of these.
+
+| Role | Colour | Share |
+|---|---|---|
+| background | violet `#5b2be0` | about 60 % |
+| the poodle | cream `#fff6e5` | about 30 % |
+| pencil and collar | yellow `#ffc928` | about 10 % |
+
+Violet and yellow are opposites on the colour wheel, so the pencil is the loudest thing in the picture. Measured
+contrast: cream on violet 6.8 : 1, yellow on violet 4.8 : 1, violet on a white page 7.3 : 1. Of four palettes tried
+(`PALETTES` in the film file; render `ChannelAvatarOptions` frames 0-3 to compare) it was the only one where both the
+poodle and the pencil stayed clear at 32 px on light and dark pages.
+
 ## Bio (channel description)
 
-> Weird true stories, doodled. 🐩✏️
+> Stories doodled. 🐩✏️
 >
 > The stories nobody told you: wars lost to birds, laws that backfired, inventions that went wrong, animals that
 > outsmarted everyone. History, science, nature, whatever is strange and real. Each one drawn and told in under a
@@ -25,4 +40,4 @@ Re-render from `studio/`:
 >
 > New shorts every week. Subscribe so you don't miss the next one.
 
-Short version (handle line, Shorts, TikTok, Instagram): `Weird true stories, doodled. Each one under a minute. 🐩✏️`
+Short version (handle line, Shorts, TikTok, Instagram): `Stories doodled. Weird, true, and under a minute. 🐩✏️`
